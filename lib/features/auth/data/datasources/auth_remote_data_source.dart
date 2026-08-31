@@ -94,7 +94,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         return null;
       }
     }
-    return UserModel.fromJson(MockData.sampleUser);
+    return null;
   }
 
   @override

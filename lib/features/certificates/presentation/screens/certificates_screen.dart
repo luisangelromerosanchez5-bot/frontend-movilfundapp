@@ -44,10 +44,7 @@ class CertificatesScreen extends ConsumerWidget {
                 }
 
                 // Certificado destacado (el primero aprobado)
-                final featured = certificates.firstWhere(
-                  (c) => c.estaAprobado,
-                  orElse: () => certificates.first,
-                );
+                final featured = certificates.where((c) => c.estaAprobado).firstOrNull ?? certificates.first;
 
                 // Historial
                 final history = certificates.where((c) => c.id != featured.id).toList();
