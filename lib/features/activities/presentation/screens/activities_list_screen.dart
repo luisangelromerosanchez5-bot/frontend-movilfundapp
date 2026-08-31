@@ -1,0 +1,231 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_styles.dart';
+import '../../domain/entities/activity.dart';
+import '../providers/activity_provider.dart';
+import 'activity_detail_screen.dart';
+
+class ActivitiesListScreen extends ConsumerWidget {
+  const ActivitiesListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activitiesAsync = ref.watch(activitiesListProvider);
+    final filter = ref.watch(activityFilterProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final categories = ['Todos', 'Reforestación', 'Reciclaje', 'Conservación', 'Educación'];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Actividades disponibles'),
+        automaticallyImplyLeading: false,
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Buscador
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TextField(
+                onChanged: (val) {
+                  ref.read(activityFilterProvider.notifier).state = filter.copyWith(query: val);
+                },
+                decoration: InputDecoration(
+                  hintText: 'Buscar actividad...',
+                  prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textSecondaryLight),
+                  suffixIcon: filter.query.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () {
+                            ref.read(activityFilterProvider.notifier).state = filter.copyWith(query: '');
+                          },
+                        )
+                      : null,
+                ),
+              ),
+            ),
+
+            // Chips de categorías
+            SizedBox(
+              height: 44,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: categories.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  final isSelected = filter.categoria == cat;
+                  return ChoiceChip(
+                    label: Text(cat),
+                    selected: isSelected,
+                    selectedColor: isDark ? AppColors.secondary : AppColors.primary,
+                    labelStyle: TextStyle(
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                    backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+                    side: BorderSide(
+                      color: isSelected
+                          ? Colors.transparent
+                          : (isDark ? AppColors.borderDark : AppColors.borderLight),
+                    ),
+                    onSelected: (selected) {
+                      if (selected) {
+                        ref.read(activityFilterProvider.notifier).state = filter.copyWith(categoria: cat);
+                      }
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Lista de actividades
+            Expanded(
+              child: activitiesAsync.when(
+                data: (activities) {
+                  if (activities.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.nature_people_outlined, size: 64, color: AppColors.textSecondaryLight),
+                          const SizedBox(height: 12),
+                          Text('No se encontraron actividades', style: AppStyles.titleSmall),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: () async => ref.refresh(activitiesListProvider),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      itemCount: activities.length,
+                      itemBuilder: (context, index) {
+                        final activity = activities[index];
+                        return _ActivityCard(activity: activity);
+                      },
+                    ),
+                  );
+                },
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+                error: (err, _) => Center(
+                  child: Text('Error al cargar actividades: $err'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityCard extends StatelessWidget {
+  final Activity activity;
+
+  const _ActivityCard({required this.activity});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isLleno = activity.estadoCupos == 'lleno';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ActivityDetailScreen(activity: activity),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Miniatura o contenedor de color temático
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  image: activity.imagenUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(activity.imagenUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: activity.imagenUrl == null
+                    ? const Icon(Icons.forest_rounded, color: AppColors.primary, size: 36)
+                    : null,
+              ),
+              const SizedBox(width: 14),
+
+              // Contenido
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      activity.titulo,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${activity.fecha} · Cupos: ${activity.cuposOcupados}/${activity.cuposTotales}',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Tag de estado
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isLleno
+                            ? AppColors.error.withValues(alpha: 0.12)
+                            : AppColors.secondary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        isLleno ? 'Lleno' : 'Disponible',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isLleno ? AppColors.error : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.textSecondaryLight),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
