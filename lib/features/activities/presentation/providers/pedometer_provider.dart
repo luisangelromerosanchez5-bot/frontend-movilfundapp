@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/pedometer_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/activity.dart';
 import '../../domain/entities/asistencia.dart';
 import 'activity_provider.dart';
@@ -131,6 +132,16 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
         distanciaKm: finalData.distanceKm,
         calorias: finalData.calories,
       );
+
+      // Actualizar horas acumuladas del usuario
+      final user = ref.read(authProvider).user;
+      if (user != null) {
+        final updatedUser = user.copyWith(
+          horasAcumuladas: user.horasAcumuladas + state.activity.duracionHoras,
+          totalCertificados: user.totalCertificados + 1,
+        );
+        await ref.read(authProvider.notifier).updateProfile(updatedUser);
+      }
 
       state = state.copyWith(
         isTracking: false,

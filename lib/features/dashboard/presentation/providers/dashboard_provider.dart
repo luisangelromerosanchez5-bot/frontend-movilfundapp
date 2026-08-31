@@ -16,9 +16,9 @@ final dashboardStatsProvider = FutureProvider<VolunteerStats>((ref) async {
   }
 
   return const VolunteerStats(
-    horasAcumuladas: 14,
-    totalCertificados: 3,
-    totalDonaciones: 120000.0,
+    horasAcumuladas: 0,
+    totalCertificados: 0,
+    totalDonaciones: 0.0,
     metaAnualHoras: 20,
   );
 });

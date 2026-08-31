@@ -1,5 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
+import '../../../certificates/data/datasources/certificate_remote_data_source.dart';
+import '../../../certificates/data/models/certificate_model.dart';
+import '../../../certificates/domain/entities/certificate.dart';
+import '../../../certificates/presentation/providers/certificate_provider.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../data/datasources/donation_remote_data_source.dart';
 import '../../data/repositories/donation_repository_impl.dart';
 import '../../domain/entities/donation.dart';
@@ -79,11 +84,29 @@ class DonationNotifier extends StateNotifier<DonationFormState> {
 
     try {
       final donation = await repository.createDonation(
-        usuarioId: user?.id ?? 'u101',
+        usuarioId: user?.id ?? '1',
         monto: state.selectedAmount,
         metodoPago: state.selectedMethod,
         proyectoDestino: 'Reforestación y Conservación de Humedales',
       );
+
+      // Crear certificado dinámico de donación
+      final certCode = 'FB-DON-${donation.codigoTransaccion.replaceAll("TX-FB-", "")}';
+      final newCert = CertificateModel(
+        id: 'cert-don-${donation.id}',
+        tipo: CertificateType.donacion,
+        titulo: 'Certificado de Donación',
+        actividadTitulo: donation.proyectoDestino ?? 'Fondo de Conservación Ambiental',
+        monto: donation.monto,
+        fechaEmision: donation.fecha,
+        estado: 'aprobado',
+        codigoVerificacion: certCode,
+        firmadoPor: 'Carlos Mendoza - Tesorería Fundación',
+        destinatario: user?.nombreCompleto ?? 'Donante Solidario',
+        documentoIdentidad: '1.098.765.432',
+      );
+
+      CertificateRemoteDataSourceImpl.addDynamicCertificate(newCert);
 
       // Actualizar donación acumulada del usuario
       if (user != null) {
@@ -91,8 +114,12 @@ class DonationNotifier extends StateNotifier<DonationFormState> {
           totalDonaciones: user.totalDonaciones + state.selectedAmount,
           totalCertificados: user.totalCertificados + 1,
         );
-        ref.read(authProvider.notifier).updateProfile(updatedUser);
+        await ref.read(authProvider.notifier).updateProfile(updatedUser);
       }
+
+      // Refrescar proveedores de certificados y dashboard
+      ref.invalidate(userCertificatesProvider);
+      ref.invalidate(dashboardStatsProvider);
 
       state = state.copyWith(isLoading: false, lastDonation: donation);
       return donation;

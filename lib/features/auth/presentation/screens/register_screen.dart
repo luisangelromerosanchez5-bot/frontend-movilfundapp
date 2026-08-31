@@ -72,7 +72,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       if (!mounted) return;
       if (success) {
-        Navigator.pop(context);
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 28),
+                SizedBox(width: 8),
+                Text('¡Registro exitoso!'),
+              ],
+            ),
+            content: const Text(
+              'Tu cuenta ha sido creada correctamente en Fundación Biosferas. Por favor inicia sesión con tu correo y contraseña.',
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx); // Close dialog
+                  Navigator.pop(context); // Return to LoginScreen
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Ir a Iniciar Sesión'),
+              ),
+            ],
+          ),
+        );
       } else {
         final error = ref.read(authProvider).errorMessage ?? 'Error al registrar usuario';
         ScaffoldMessenger.of(context).showSnackBar(

@@ -90,7 +90,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      final user = await repository.register(
+      await repository.register(
         nombres: nombres,
         apellidos: apellidos,
         email: email,
@@ -98,7 +98,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         fechaNacimiento: fechaNacimiento,
         telefono: telefono,
       );
-      state = state.copyWith(status: AuthStatus.authenticated, user: user);
+      state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
       return true;
     } catch (e) {
       state = state.copyWith(

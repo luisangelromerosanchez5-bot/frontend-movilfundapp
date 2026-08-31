@@ -10,21 +10,33 @@ abstract class CertificateRemoteDataSource {
 
 class CertificateRemoteDataSourceImpl implements CertificateRemoteDataSource {
   final ApiClient apiClient;
+  static final List<CertificateModel> localDynamicCertificates = [];
 
   CertificateRemoteDataSourceImpl({required this.apiClient});
+
+  static void addDynamicCertificate(CertificateModel cert) {
+    // Evitar duplicados por id
+    localDynamicCertificates.removeWhere((c) => c.id == cert.id);
+    localDynamicCertificates.insert(0, cert);
+  }
 
   @override
   Future<List<CertificateModel>> getCertificatesByUser(String usuarioId) async {
     try {
       final response = await apiClient.dio.get('${ApiConstants.certificados}/usuario/$usuarioId');
-      return (response.data as List).map((e) => CertificateModel.fromJson(e)).toList();
+      final remote = (response.data as List).map((e) => CertificateModel.fromJson(e)).toList();
+      return [...localDynamicCertificates, ...remote];
     } catch (_) {
-      return MockData.sampleCertificates.map((e) => CertificateModel.fromJson(e)).toList();
+      final mock = MockData.sampleCertificates.map((e) => CertificateModel.fromJson(e)).toList();
+      return [...localDynamicCertificates, ...mock];
     }
   }
 
   @override
   Future<CertificateModel?> getCertificateById(String id) async {
+    final local = localDynamicCertificates.where((c) => c.id == id).firstOrNull;
+    if (local != null) return local;
+
     try {
       final response = await apiClient.dio.get('${ApiConstants.certificados}/$id');
       return CertificateModel.fromJson(response.data);
