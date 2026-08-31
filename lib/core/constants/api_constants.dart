@@ -2,8 +2,8 @@
 class ApiConstants {
   ApiConstants._();
 
-  // URL base configurable (FastAPI o Supabase)
-  static const String defaultBaseUrl = 'https://api.fundacionbiosferas.org/api/v1';
+  // URL base apuntando al backend en la nube (Render)
+  static const String defaultBaseUrl = 'https://backend-movilfundapp.onrender.com/api/v1';
 
   // Timeout settings
   static const Duration connectTimeout = Duration(seconds: 15);
