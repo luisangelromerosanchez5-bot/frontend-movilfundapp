@@ -4,12 +4,14 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/camera_service.dart';
 
 class ProfileAvatar extends StatefulWidget {
+  final String? userId;
   final String? initialPhotoPath;
   final String initials;
   final ValueChanged<String>? onPhotoChanged;
 
   const ProfileAvatar({
     super.key,
+    this.userId,
     this.initialPhotoPath,
     required this.initials,
     this.onPhotoChanged,
@@ -26,13 +28,27 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
   @override
   void initState() {
     super.initState();
-    _currentPhotoPath = widget.initialPhotoPath;
     _loadSavedPhoto();
   }
 
+  @override
+  void didUpdateWidget(covariant ProfileAvatar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId || oldWidget.initialPhotoPath != widget.initialPhotoPath) {
+      _loadSavedPhoto();
+    }
+  }
+
   Future<void> _loadSavedPhoto() async {
-    final saved = await _cameraService.getSavedProfilePhotoPath();
-    if (saved != null && mounted) {
+    if (widget.initialPhotoPath != null && File(widget.initialPhotoPath!).existsSync()) {
+      setState(() {
+        _currentPhotoPath = widget.initialPhotoPath;
+      });
+      return;
+    }
+
+    final saved = await _cameraService.getSavedProfilePhotoPath(userId: widget.userId);
+    if (mounted) {
       setState(() {
         _currentPhotoPath = saved;
       });
@@ -73,7 +89,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
                 title: const Text('Tomar foto con la cámara'),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final path = await _cameraService.takePhoto();
+                  final path = await _cameraService.takePhoto(userId: widget.userId);
                   if (path != null && mounted) {
                     setState(() => _currentPhotoPath = path);
                     widget.onPhotoChanged?.call(path);
@@ -88,7 +104,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
                 title: const Text('Elegir de la galería'),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final path = await _cameraService.pickFromGallery();
+                  final path = await _cameraService.pickFromGallery(userId: widget.userId);
                   if (path != null && mounted) {
                     setState(() => _currentPhotoPath = path);
                     widget.onPhotoChanged?.call(path);

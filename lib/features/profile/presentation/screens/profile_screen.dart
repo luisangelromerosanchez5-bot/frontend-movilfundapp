@@ -32,8 +32,10 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Avatar con cámara integrada
+              // Avatar con cámara integrada individual por usuario
               ProfileAvatar(
+                userId: user?.id ?? user?.correo,
+                initialPhotoPath: user?.fotoUrl,
                 initials: userInitials,
                 onPhotoChanged: (path) {
                   if (user != null) {

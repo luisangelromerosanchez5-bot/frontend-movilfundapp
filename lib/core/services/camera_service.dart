@@ -25,7 +25,7 @@ class CameraService {
   }
 
   /// Toma una foto con la cámara del dispositivo
-  Future<String?> takePhoto() async {
+  Future<String?> takePhoto({String? userId}) async {
     try {
       await requestCameraPermission();
       final XFile? photo = await _picker.pickImage(
@@ -37,7 +37,7 @@ class CameraService {
       );
 
       if (photo != null) {
-        await saveProfilePhotoPath(photo.path);
+        await saveProfilePhotoPath(photo.path, userId: userId);
         return photo.path;
       }
       return null;
@@ -48,7 +48,7 @@ class CameraService {
   }
 
   /// Selecciona una foto de la galería
-  Future<String?> pickFromGallery() async {
+  Future<String?> pickFromGallery({String? userId}) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -58,7 +58,7 @@ class CameraService {
       );
 
       if (image != null) {
-        await saveProfilePhotoPath(image.path);
+        await saveProfilePhotoPath(image.path, userId: userId);
         return image.path;
       }
       return null;
@@ -68,19 +68,21 @@ class CameraService {
     }
   }
 
-  /// Guarda la ruta local de la foto de perfil en SharedPreferences
-  Future<void> saveProfilePhotoPath(String path) async {
+  /// Guarda la ruta local de la foto de perfil en SharedPreferences por usuario
+  Future<void> saveProfilePhotoPath(String path, {String? userId}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(ApiConstants.profilePhotoKey, path);
+    final key = userId != null ? '${ApiConstants.profilePhotoKey}_$userId' : ApiConstants.profilePhotoKey;
+    await prefs.setString(key, path);
   }
 
-  /// Obtiene la ruta guardada de la foto de perfil
-  Future<String?> getSavedProfilePhotoPath() async {
+  /// Obtiene la ruta guardada de la foto de perfil para un usuario específico
+  Future<String?> getSavedProfilePhotoPath({String? userId}) async {
     final prefs = await SharedPreferences.getInstance();
-    final path = prefs.getString(ApiConstants.profilePhotoKey);
+    final key = userId != null ? '${ApiConstants.profilePhotoKey}_$userId' : ApiConstants.profilePhotoKey;
+    final path = prefs.getString(key);
     if (path != null && File(path).existsSync()) {
       return path;
     }
-    return path;
+    return null;
   }
 }
