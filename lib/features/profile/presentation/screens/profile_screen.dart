@@ -7,6 +7,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/badges_modal.dart';
 import '../widgets/profile_avatar.dart';
 import 'edit_profile_screen.dart';
+import 'my_postulaciones_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -77,6 +78,20 @@ class ProfileScreen extends ConsumerWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+
+              _buildOptionCard(
+                context: context,
+                isDark: isDark,
+                icon: Icons.assignment_turned_in_outlined,
+                title: 'Mis postulaciones a actividades',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MyPostulacionesScreen()),
                   );
                 },
               ),

@@ -2,6 +2,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/pedometer_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../certificates/data/datasources/certificate_remote_data_source.dart';
+import '../../../certificates/data/models/certificate_model.dart';
+import '../../../certificates/domain/entities/certificate.dart';
+import '../../../certificates/presentation/providers/certificate_provider.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../domain/entities/activity.dart';
 import '../../domain/entities/asistencia.dart';
 import 'activity_provider.dart';
@@ -133,15 +138,39 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
         calorias: finalData.calories,
       );
 
-      // Actualizar horas acumuladas del usuario
       final user = ref.read(authProvider).user;
+      final horasActividad = state.activity.duracionHoras > 0 ? state.activity.duracionHoras : 4;
+
+      // Generar Certificado Oficial de Participación / Voluntariado
+      final certCode = 'FB-VOL-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+      final newCert = CertificateModel(
+        id: 'cert-vol-${DateTime.now().millisecondsSinceEpoch}',
+        tipo: CertificateType.voluntariado,
+        titulo: 'Certificado de Voluntariado',
+        actividadTitulo: state.activity.titulo,
+        horas: horasActividad,
+        fechaEmision: DateTime.now(),
+        estado: 'aprobado',
+        codigoVerificacion: certCode,
+        firmadoPor: 'Dra. Elena Ramos - Directora Ejecutiva',
+        destinatario: user?.nombreCompleto ?? 'Voluntario Biosferas',
+        documentoIdentidad: '1.098.765.432',
+      );
+
+      CertificateRemoteDataSourceImpl.addDynamicCertificate(newCert);
+
+      // Actualizar horas acumuladas y certificados del usuario
       if (user != null) {
         final updatedUser = user.copyWith(
-          horasAcumuladas: user.horasAcumuladas + state.activity.duracionHoras,
+          horasAcumuladas: user.horasAcumuladas + horasActividad,
           totalCertificados: user.totalCertificados + 1,
         );
         await ref.read(authProvider.notifier).updateProfile(updatedUser);
       }
+
+      // Refrescar certificados y dashboard
+      ref.invalidate(userCertificatesProvider);
+      ref.invalidate(dashboardStatsProvider);
 
       state = state.copyWith(
         isTracking: false,

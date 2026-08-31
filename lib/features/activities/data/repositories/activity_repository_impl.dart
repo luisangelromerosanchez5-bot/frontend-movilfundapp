@@ -1,5 +1,6 @@
 import '../../domain/entities/activity.dart';
 import '../../domain/entities/asistencia.dart';
+import '../../domain/entities/postulacion.dart';
 import '../../domain/repositories/activity_repository.dart';
 import '../datasources/activity_remote_data_source.dart';
 
@@ -19,12 +20,21 @@ class ActivityRepositoryImpl implements ActivityRepository {
   }
 
   @override
+  Future<List<Postulacion>> getUserPostulaciones(String usuarioId) async {
+    return await remoteDataSource.getUserPostulaciones(usuarioId);
+  }
+
+  @override
   Future<bool> postularseActividad({
     required String actividadId,
     required String usuarioId,
     required String nombres,
     required String correo,
     String? notas,
+    String? actividadTitulo,
+    String? actividadFecha,
+    String? actividadHora,
+    String? actividadUbicacion,
   }) async {
     return await remoteDataSource.postularseActividad({
       'actividad_id': actividadId,
@@ -32,6 +42,10 @@ class ActivityRepositoryImpl implements ActivityRepository {
       'nombres': nombres,
       'correo': correo,
       'notas': notas,
+      'actividad_titulo': actividadTitulo,
+      'actividad_fecha': actividadFecha,
+      'actividad_hora': actividadHora,
+      'actividad_ubicacion': actividadUbicacion,
     });
   }
 

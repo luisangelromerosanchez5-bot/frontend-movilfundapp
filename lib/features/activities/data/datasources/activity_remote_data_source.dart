@@ -4,10 +4,12 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mock_data.dart';
 import '../models/activity_model.dart';
 import '../models/asistencia_model.dart';
+import '../models/postulacion_model.dart';
 
 abstract class ActivityRemoteDataSource {
   Future<List<ActivityModel>> getActivities({String? query, String? categoria});
   Future<ActivityModel?> getActivityById(String id);
+  Future<List<PostulacionModel>> getUserPostulaciones(String usuarioId);
   Future<bool> postularseActividad(Map<String, dynamic> data);
   Future<AsistenciaModel> checkInAsistencia(Map<String, dynamic> data);
   Future<AsistenciaModel> checkOutAsistencia(Map<String, dynamic> data);
@@ -17,6 +19,7 @@ class ActivityRemoteDataSourceImpl implements ActivityRemoteDataSource {
   final ApiClient apiClient;
   final List<ActivityModel> _localActivities = [];
   final List<AsistenciaModel> _localAsistencias = [];
+  static final List<PostulacionModel> _localPostulaciones = [];
 
   ActivityRemoteDataSourceImpl({required this.apiClient}) {
     _localActivities.addAll(
@@ -69,13 +72,49 @@ class ActivityRemoteDataSourceImpl implements ActivityRemoteDataSource {
   }
 
   @override
+  Future<List<PostulacionModel>> getUserPostulaciones(String usuarioId) async {
+    try {
+      final response = await apiClient.dio.get('${ApiConstants.postulaciones}/usuario/$usuarioId');
+      final remote = (response.data as List).map((e) => PostulacionModel.fromJson(e)).toList();
+      return [..._localPostulaciones.where((p) => p.usuarioId == usuarioId), ...remote];
+    } catch (_) {
+      final userPosts = _localPostulaciones.where((p) => p.usuarioId == usuarioId).toList();
+      if (userPosts.isNotEmpty) return userPosts;
+
+      // Si no hay aún, retornar postulaciones registradas en memoria
+      return userPosts;
+    }
+  }
+
+  @override
   Future<bool> postularseActividad(Map<String, dynamic> data) async {
+    final actId = data['actividad_id']?.toString() ?? '';
+    final userId = data['usuario_id']?.toString() ?? '1';
+    final actTitulo = data['actividad_titulo'] ?? 'Actividad de Voluntariado';
+    final actFecha = data['actividad_fecha'] ?? '2026-09-05';
+    final actHora = data['actividad_hora'] ?? '08:00 AM';
+    final actUbicacion = data['actividad_ubicacion'] ?? 'Punto de encuentro';
+
+    final newPost = PostulacionModel(
+      id: const Uuid().v4(),
+      actividadId: actId,
+      usuarioId: userId,
+      actividadTitulo: actTitulo,
+      actividadFecha: actFecha,
+      actividadHora: actHora,
+      actividadUbicacion: actUbicacion,
+      estado: 'aprobada',
+      fechaPostulacion: DateTime.now(),
+    );
+
+    // Evitar duplicados
+    _localPostulaciones.removeWhere((p) => p.actividadId == actId && p.usuarioId == userId);
+    _localPostulaciones.insert(0, newPost);
+
     try {
       await apiClient.dio.post(ApiConstants.postulaciones, data: data);
       return true;
     } catch (_) {
-      // Simular postulación exitosa local
-      final actId = data['actividad_id'];
       final index = _localActivities.indexWhere((a) => a.id == actId);
       if (index != -1) {
         final act = _localActivities[index];

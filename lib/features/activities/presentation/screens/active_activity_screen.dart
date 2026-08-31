@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../certificates/domain/entities/certificate.dart';
+import '../../../certificates/presentation/screens/certificate_pdf_viewer_screen.dart';
 import '../../domain/entities/activity.dart';
 import '../../domain/entities/asistencia.dart';
 import '../providers/pedometer_provider.dart';
@@ -26,6 +29,7 @@ class ActiveActivityScreen extends ConsumerWidget {
       activeSessionProviderFamily((activity: activity, asistencia: asistencia)).notifier,
     );
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final user = ref.watch(authProvider).user;
 
     return PopScope(
       canPop: !sessionState.isTracking,
@@ -228,7 +232,7 @@ class ActiveActivityScreen extends ConsumerWidget {
                         shape: RoundedRectangleBorder(borderRadius: AppStyles.cardRadius),
                         title: const Text('¿Finalizar jornada?'),
                         content: Text(
-                          'Se completará tu registro de ${AppFormatters.formatNumber(sessionState.steps)} pasos (${sessionState.distanceKm.toStringAsFixed(1)} km) y se guardará tu asistencia.',
+                          'Se completará tu registro de ${AppFormatters.formatNumber(sessionState.steps)} pasos (${sessionState.distanceKm.toStringAsFixed(1)} km) y se generará tu Certificado Oficial de Voluntariado.',
                         ),
                         actions: [
                           TextButton(
@@ -238,7 +242,7 @@ class ActiveActivityScreen extends ConsumerWidget {
                           ElevatedButton(
                             onPressed: () => Navigator.pop(ctx, true),
                             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                            child: const Text('Finalizar'),
+                            child: const Text('Finalizar y Generar Certificado'),
                           ),
                         ],
                       ),
@@ -247,13 +251,78 @@ class ActiveActivityScreen extends ConsumerWidget {
                     if (confirm == true && context.mounted) {
                       await sessionNotifier.finishSessionAndCheckOut();
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('¡Jornada finalizada y asistencia registrada exitosamente!'),
-                            backgroundColor: AppColors.primary,
+                        final horasAct = activity.duracionHoras > 0 ? activity.duracionHoras : 4;
+                        final certCode = 'FB-VOL-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+                        final cert = Certificate(
+                          id: 'cert-vol-${DateTime.now().millisecondsSinceEpoch}',
+                          tipo: CertificateType.voluntariado,
+                          titulo: 'Certificado de Voluntariado',
+                          actividadTitulo: activity.titulo,
+                          horas: horasAct,
+                          fechaEmision: DateTime.now(),
+                          estado: 'aprobado',
+                          codigoVerificacion: certCode,
+                          firmadoPor: 'Dra. Elena Ramos - Directora Ejecutiva',
+                          destinatario: user?.nombreCompleto ?? 'Voluntario Biosferas',
+                          documentoIdentidad: '1.098.765.432',
+                        );
+
+                        // Mostrar modal con opción de descargar PDF o volver
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (dialogCtx) => AlertDialog(
+                            shape: RoundedRectangleBorder(borderRadius: AppStyles.cardRadius),
+                            title: Row(
+                              children: const [
+                                Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 28),
+                                SizedBox(width: 10),
+                                Text('¡Jornada Exitosa!'),
+                              ],
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Has acumulado $horasAct horas de voluntariado en "${activity.titulo}".',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Tu certificado de participación ha sido generado y ya está disponible en la pestaña Certificados.',
+                                  style: TextStyle(fontSize: 12.5, color: AppColors.textSecondaryLight),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(dialogCtx);
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Ir al inicio'),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pop(dialogCtx);
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CertificatePdfViewerScreen(certificate: cert),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                                label: const Text('Ver Certificado PDF'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.secondary,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         );
-                        Navigator.pop(context);
                       }
                     }
                   },

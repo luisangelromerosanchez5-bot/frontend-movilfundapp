@@ -3,6 +3,7 @@ import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../data/datasources/activity_remote_data_source.dart';
 import '../../data/repositories/activity_repository_impl.dart';
 import '../../domain/entities/activity.dart';
+import '../../domain/entities/postulacion.dart';
 import '../../domain/repositories/activity_repository.dart';
 
 final activityRemoteDataSourceProvider = Provider<ActivityRemoteDataSource>((ref) {
@@ -39,4 +40,10 @@ final activitiesListProvider = FutureProvider<List<Activity>>((ref) async {
 final activityDetailProvider = FutureProvider.family<Activity?, String>((ref, id) async {
   final repository = ref.watch(activityRepositoryProvider);
   return await repository.getActivityById(id);
+});
+
+final userPostulacionesProvider = FutureProvider<List<Postulacion>>((ref) async {
+  final repository = ref.watch(activityRepositoryProvider);
+  final user = ref.watch(authProvider).user;
+  return await repository.getUserPostulaciones(user?.id ?? '1');
 });

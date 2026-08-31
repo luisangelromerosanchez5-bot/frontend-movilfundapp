@@ -46,9 +46,13 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
 
       final success = await repo.postularseActividad(
         actividadId: widget.activity.id,
-        usuarioId: user?.id ?? 'u101',
+        usuarioId: user?.id ?? '1',
         nombres: _nombresController.text,
         correo: _correoController.text,
+        actividadTitulo: widget.activity.titulo,
+        actividadFecha: widget.activity.fecha,
+        actividadHora: widget.activity.hora,
+        actividadUbicacion: widget.activity.ubicacionNombre,
       );
 
       setState(() {
@@ -59,9 +63,10 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
       if (!mounted) return;
       if (success) {
         ref.invalidate(activitiesListProvider);
+        ref.invalidate(userPostulacionesProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('¡Postulación confirmada con éxito! Te esperamos en la jornada.'),
+            content: Text('¡Postulación confirmada con éxito! Puedes verla en tu perfil.'),
             backgroundColor: AppColors.primary,
           ),
         );
