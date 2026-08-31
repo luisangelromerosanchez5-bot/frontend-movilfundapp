@@ -12,9 +12,9 @@ class MockData {
     'rol': 'voluntario',
     'created_at': '2025-01-15T09:00:00Z',
     'meta_anual_horas': 20,
-    'horas_acumuladas': 14,
-    'total_certificados': 3,
-    'total_donaciones': 120000.0,
+    'horas_acumuladas': 0,
+    'total_certificados': 0,
+    'total_donaciones': 0.0,
   };
 
   static const List<Map<String, dynamic>> sampleActivities = [
