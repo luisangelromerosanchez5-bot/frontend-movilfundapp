@@ -30,5 +30,6 @@ abstract class ActivityRepository {
     required int pasosSesion,
     required double distanciaKm,
     required int calorias,
+    String? fotoEvidenciaUrl,
   });
 }

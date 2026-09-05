@@ -19,13 +19,13 @@ class ActivitiesListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Actividades disponibles'),
+        title: const Text('Actividades Disponibles'),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // Buscador
+            // Buscador con diseño orgánico
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: TextField(
@@ -33,8 +33,8 @@ class ActivitiesListScreen extends ConsumerWidget {
                   ref.read(activityFilterProvider.notifier).state = filter.copyWith(query: val);
                 },
                 decoration: InputDecoration(
-                  hintText: 'Buscar actividad...',
-                  prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textSecondaryLight),
+                  hintText: 'Buscar actividad, lugar o temática...',
+                  prefixIcon: const Icon(Icons.search_rounded, color: AppColors.secondary),
                   suffixIcon: filter.query.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.close_rounded),
@@ -47,7 +47,7 @@ class ActivitiesListScreen extends ConsumerWidget {
               ),
             ),
 
-            // Chips de categorías
+            // Chips de categorías filtrables
             SizedBox(
               height: 44,
               child: ListView.separated(
@@ -66,7 +66,7 @@ class ActivitiesListScreen extends ConsumerWidget {
                       color: isSelected
                           ? Colors.white
                           : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       fontSize: 13,
                     ),
                     backgroundColor: isDark ? AppColors.cardDark : Colors.white,
@@ -95,9 +95,22 @@ class ActivitiesListScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.nature_people_outlined, size: 64, color: AppColors.textSecondaryLight),
-                          const SizedBox(height: 12),
+                          Container(
+                            width: 68,
+                            height: 68,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.nature_people_outlined, size: 36, color: AppColors.primary),
+                          ),
+                          const SizedBox(height: 14),
                           Text('No se encontraron actividades', style: AppStyles.titleSmall),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Intenta cambiar la categoría o el término de búsqueda.',
+                            style: TextStyle(fontSize: 13, color: AppColors.textSecondaryLight),
+                          ),
                         ],
                       ),
                     );
@@ -140,89 +153,141 @@ class _ActivityCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isLleno = activity.estadoCupos == 'lleno';
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ActivityDetailScreen(activity: activity),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Miniatura o contenedor de color temático
-              Container(
-                width: 76,
-                height: 76,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                  image: activity.imagenUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(activity.imagenUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: activity.imagenUrl == null
-                    ? const Icon(Icons.forest_rounded, color: AppColors.primary, size: 36)
-                    : null,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: AppStyles.cardRadius,
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+        boxShadow: AppStyles.softShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: AppStyles.cardRadius,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ActivityDetailScreen(activity: activity),
               ),
-              const SizedBox(width: 14),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Fotografía única de la actividad
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    activity.imagenUrl ?? 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400',
+                    width: 82,
+                    height: 82,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 82,
+                      height: 82,
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      child: const Icon(Icons.forest_rounded, color: AppColors.primary, size: 36),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
 
-              // Contenido
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      activity.titulo,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${activity.fecha} · Cupos: ${activity.cuposOcupados}/${activity.cuposTotales}',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    // Tag de estado
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isLleno
-                            ? AppColors.error.withValues(alpha: 0.12)
-                            : AppColors.secondary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        isLleno ? 'Lleno' : 'Disponible',
+                // Información de la actividad
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        activity.titulo,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: isLleno ? AppColors.error : AppColors.primary,
+                          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${activity.fecha} · ${activity.hora}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 13, color: AppColors.primary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              activity.ubicacionNombre,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Tag de estado y categoría
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isLleno
+                                  ? AppColors.error.withValues(alpha: 0.12)
+                                  : AppColors.secondary.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              isLleno ? 'Lleno' : 'Disponible (${activity.cuposOcupados}/${activity.cuposTotales})',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isLleno ? AppColors.error : AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white10 : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              activity.categoria,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.textSecondaryLight),
-            ],
+                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textSecondaryLight),
+              ],
+            ),
           ),
         ),
       ),

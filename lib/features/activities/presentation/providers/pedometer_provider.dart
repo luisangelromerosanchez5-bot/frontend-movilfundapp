@@ -123,12 +123,13 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
     pedometerService.addManualSteps(count);
   }
 
-  Future<Asistencia?> finishSessionAndCheckOut() async {
+  Future<Asistencia?> finishSessionAndCheckOut({String? fotoEvidenciaUrl}) async {
     final finalData = pedometerService.finalizarSesion();
     _timer?.cancel();
 
     final repo = ref.read(activityRepositoryProvider);
     final asistenciaId = state.asistencia?.id ?? 'asist-001';
+    final user = ref.read(authProvider).user;
 
     try {
       final updated = await repo.checkOutAsistencia(
@@ -136,9 +137,9 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
         pasosSesion: finalData.steps,
         distanciaKm: finalData.distanceKm,
         calorias: finalData.calories,
+        fotoEvidenciaUrl: fotoEvidenciaUrl,
       );
 
-      final user = ref.read(authProvider).user;
       final horasActividad = state.activity.duracionHoras > 0 ? state.activity.duracionHoras : 4;
 
       // Generar Certificado Oficial de Participación / Voluntariado
@@ -157,7 +158,7 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
         documentoIdentidad: '1.098.765.432',
       );
 
-      CertificateRemoteDataSourceImpl.addDynamicCertificate(newCert);
+      CertificateRemoteDataSourceImpl.addDynamicCertificate(newCert, userId: user?.id);
 
       // Actualizar horas acumuladas y certificados del usuario
       if (user != null) {

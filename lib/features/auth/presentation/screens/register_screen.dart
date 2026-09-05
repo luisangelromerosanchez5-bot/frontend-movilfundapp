@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -17,6 +18,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nombresController = TextEditingController();
   final _apellidosController = TextEditingController();
+  final _cedulaController = TextEditingController();
+  final _telefonoController = TextEditingController();
   final _fechaNacimientoController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -26,6 +29,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   void dispose() {
     _nombresController.dispose();
     _apellidosController.dispose();
+    _cedulaController.dispose();
+    _telefonoController.dispose();
     _fechaNacimientoController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -41,7 +46,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppColors.primary,
               onPrimary: Colors.white,
               surface: Colors.white,
@@ -68,6 +73,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             email: _emailController.text.trim(),
             password: _passwordController.text,
             fechaNacimiento: _fechaNacimientoController.text,
+            telefono: _telefonoController.text.trim(),
           );
 
       if (!mounted) return;
@@ -78,7 +84,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           builder: (ctx) => AlertDialog(
             title: const Row(
               children: [
-                Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 28),
+                Icon(Icons.check_circle_rounded, color: AppColors.secondary, size: 28),
                 SizedBox(width: 8),
                 Text('¡Registro exitoso!'),
               ],
@@ -89,8 +95,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             actions: [
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(ctx); // Close dialog
-                  Navigator.pop(context); // Return to LoginScreen
+                  Navigator.pop(ctx);
+                  Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -138,13 +144,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Únete como voluntario',
+                  'Únete como voluntario a la Fundación Biosferas',
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
                 // NOMBRES
                 Text(
@@ -182,6 +188,54 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // CÉDULA / IDENTIFICACIÓN (SOLO NÚMEROS)
+                Text(
+                  'CÉDULA / DOCUMENTO DE IDENTIDAD',
+                  style: AppStyles.labelUppercase.copyWith(
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _cedulaController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Ingresa tu número de documento';
+                    if (v.trim().length < 6) return 'Debe tener al menos 6 dígitos numéricos';
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    hintText: '1098765432',
+                    prefixIcon: Icon(Icons.badge_outlined, size: 20),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // TELÉFONO (SOLO NÚMEROS)
+                Text(
+                  'TELÉFONO / CELULAR',
+                  style: AppStyles.labelUppercase.copyWith(
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _telefonoController,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Ingresa tu número de teléfono';
+                    if (v.trim().length < 7) return 'Debe tener al menos 7 dígitos';
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    hintText: '3124567890',
+                    prefixIcon: Icon(Icons.phone_outlined, size: 20),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // FECHA DE NACIMIENTO
                 Text(
                   'FECHA DE NACIMIENTO',
@@ -201,7 +255,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // CORREO ELECTRÓNICO
+                // CORREO ELECTRÓNICO (VALIDACIÓN ESTRICTA)
                 Text(
                   'CORREO ELECTRÓNICO',
                   style: AppStyles.labelUppercase.copyWith(
@@ -220,9 +274,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // CONTRASEÑA
+                // CONTRASEÑA (MÍNIMO 6 CARACTERES)
                 Text(
-                  'CONTRASEÑA',
+                  'CONTRASEÑA (MÍNIMO 6 CARACTERES)',
                   style: AppStyles.labelUppercase.copyWith(
                     color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                   ),
@@ -276,7 +330,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   child: GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Text(
-                      'Ya tengo una cuenta',
+                      'Ya tengo una cuenta · Iniciar sesión',
                       style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,

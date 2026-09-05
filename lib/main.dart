@@ -4,8 +4,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'core/constants/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
+import 'features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/auth/presentation/screens/welcome_screen.dart';
 import 'main_nav_screen.dart';
 
 void main() async {
@@ -50,10 +51,13 @@ class FundAppRoot extends ConsumerWidget {
           ),
         );
       case AuthStatus.authenticated:
+        if (authState.user?.rol.toLowerCase() == 'admin') {
+          return const AdminDashboardScreen();
+        }
         return const MainNavScreen();
       case AuthStatus.unauthenticated:
       case AuthStatus.error:
-        return const LoginScreen();
+        return const WelcomeScreen();
     }
   }
 }

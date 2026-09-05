@@ -49,10 +49,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository repository;
 
   AuthNotifier({required this.repository})
-      : super(const AuthState(status: AuthStatus.unauthenticated));
+      : super(const AuthState(status: AuthStatus.unauthenticated)) {
+    checkAuthStatus();
+  }
 
   Future<void> checkAuthStatus() async {
-    state = const AuthState(status: AuthStatus.unauthenticated);
+    try {
+      final user = await repository.getCurrentUser();
+      if (user != null) {
+        state = state.copyWith(status: AuthStatus.authenticated, user: user);
+      } else {
+        state = state.copyWith(status: AuthStatus.unauthenticated);
+      }
+    } catch (_) {
+      state = state.copyWith(status: AuthStatus.unauthenticated);
+    }
   }
 
   Future<bool> login(String email, String password) async {

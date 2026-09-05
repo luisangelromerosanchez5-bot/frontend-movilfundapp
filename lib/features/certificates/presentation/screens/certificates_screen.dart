@@ -7,225 +7,269 @@ import '../../domain/entities/certificate.dart';
 import '../providers/certificate_provider.dart';
 import 'certificate_pdf_viewer_screen.dart';
 
-class CertificatesScreen extends ConsumerWidget {
+class CertificatesScreen extends ConsumerStatefulWidget {
   const CertificatesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CertificatesScreen> createState() => _CertificatesScreenState();
+}
+
+class _CertificatesScreenState extends ConsumerState<CertificatesScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final certificatesAsync = ref.watch(userCertificatesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis certificados'),
+        title: const Text('Mis Certificados Oficiales'),
         automaticallyImplyLeading: false,
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppColors.secondary,
+          unselectedLabelColor: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+          indicatorColor: AppColors.secondary,
+          indicatorWeight: 3,
+          tabs: const [
+            Tab(
+              icon: Icon(Icons.volunteer_activism_rounded, size: 20),
+              text: 'Donaciones',
+            ),
+            Tab(
+              icon: Icon(Icons.nature_people_rounded, size: 20),
+              text: 'Participación',
+            ),
+          ],
+        ),
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => ref.refresh(userCertificatesProvider),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: certificatesAsync.when(
-              data: (certificates) {
-                if (certificates.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 80),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.workspace_premium_outlined, size: 64, color: AppColors.textSecondaryLight),
-                          const SizedBox(height: 12),
-                          Text('No tienes certificados aún', style: AppStyles.titleSmall),
-                        ],
-                      ),
-                    ),
-                  );
-                }
+          child: certificatesAsync.when(
+            data: (certificates) {
+              final donacionCerts = certificates
+                  .where((c) => c.tipo == CertificateType.donacion)
+                  .toList();
+              final participacionCerts = certificates
+                  .where((c) => c.tipo == CertificateType.voluntariado)
+                  .toList();
 
-                // Certificado destacado (el primero aprobado)
-                final featured = certificates.where((c) => c.estaAprobado).firstOrNull ?? certificates.first;
-
-                // Historial
-                final history = certificates.where((c) => c.id != featured.id).toList();
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Tarjeta destacada de certificado más reciente
-                    _buildFeaturedCertificateCard(context, featured, isDark),
-                    const SizedBox(height: 28),
-
-                    // Sección Historial
-                    Text(
-                      'Historial',
-                      style: AppStyles.titleSmall.copyWith(
-                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    ...history.map((cert) => _buildHistoryCertificateCard(context, cert, isDark)),
-                    const SizedBox(height: 24),
-                  ],
-                );
-              },
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 100),
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
-              ),
-              error: (err, _) => Center(child: Text('Error: $err')),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeaturedCertificateCard(BuildContext context, Certificate cert, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: AppStyles.cardRadius,
-        border: Border.all(
-          color: AppColors.secondary.withValues(alpha: 0.6),
-          width: 1.5,
-        ),
-        boxShadow: AppStyles.softShadow,
-      ),
-      child: Column(
-        children: [
-          // Icono Trofeo / Certificado
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.secondaryUltraLight,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.workspace_premium_rounded, color: AppColors.primary, size: 28),
-          ),
-          const SizedBox(height: 12),
-
-          Text(
-            cert.titulo,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            cert.tipo == CertificateType.voluntariado
-                ? '${cert.horas} horas · Emitido: ${AppFormatters.formatDateShort(cert.fechaEmision)}'
-                : '${AppFormatters.formatCurrency(cert.monto ?? 0)} · Emitido: ${AppFormatters.formatDateShort(cert.fechaEmision)}',
-            style: TextStyle(
-              fontSize: 12.5,
-              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Botón Descargar PDF
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CertificatePdfViewerScreen(certificate: cert),
-                ),
+              return TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildCertList(
+                    context,
+                    donacionCerts,
+                    isDonacion: true,
+                    isDark: isDark,
+                  ),
+                  _buildCertList(
+                    context,
+                    participacionCerts,
+                    isDonacion: false,
+                    isDark: isDark,
+                  ),
+                ],
               );
             },
-            icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-            label: const Text('Descargar / Ver PDF'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: isDark ? AppColors.secondaryLight : AppColors.primary,
-              side: BorderSide(color: isDark ? AppColors.secondary : AppColors.primary, width: 1.5),
-              minimumSize: const Size.fromHeight(44),
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+            error: (err, _) => Center(
+              child: Text('Error al cargar certificados: $err'),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildHistoryCertificateCard(BuildContext context, Certificate cert, bool isDark) {
-    final isAprobado = cert.estaAprobado;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: AppStyles.cardRadius,
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-        ),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        leading: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: isAprobado
-                ? AppColors.secondary.withValues(alpha: 0.15)
-                : AppColors.accent.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(
-            cert.tipo == CertificateType.voluntariado
-                ? Icons.nature_people_rounded
-                : Icons.volunteer_activism_rounded,
-            color: isAprobado ? AppColors.primary : AppColors.accentDark,
-          ),
-        ),
-        title: Text(
-          cert.titulo,
-          style: TextStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-          ),
-        ),
-        subtitle: Text(
-          isAprobado
-              ? 'Emitido ${AppFormatters.formatDateShort(cert.fechaEmision)}'
-              : 'En proceso de aprobación',
-          style: TextStyle(
-            fontSize: 12,
-            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-          ),
-        ),
-        trailing: isAprobado
-            ? IconButton(
-                icon: const Icon(Icons.visibility_outlined, color: AppColors.primary),
-                tooltip: 'Ver PDF',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CertificatePdfViewerScreen(certificate: cert),
-                    ),
-                  );
-                },
-              )
-            : Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  Widget _buildCertList(
+    BuildContext context,
+    List<Certificate> list, {
+    required bool isDonacion,
+    required bool isDark,
+  }) {
+    if (list.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
                 ),
-                child: const Text(
-                  'En proceso',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.accentDark),
+                child: Icon(
+                  isDonacion ? Icons.volunteer_activism_outlined : Icons.nature_people_outlined,
+                  size: 36,
+                  color: AppColors.primary,
                 ),
               ),
-      ),
+              const SizedBox(height: 16),
+              Text(
+                isDonacion
+                    ? 'No tienes certificados de donación'
+                    : 'No tienes certificados de participación',
+                textAlign: TextAlign.center,
+                style: AppStyles.titleSmall.copyWith(
+                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isDonacion
+                    ? 'Realiza un aporte económico para apoyar la reforestación y se generará tu certificado oficial deducible.'
+                    : 'Participa en jornadas de voluntariado ambiental y al hacer check-out se emitirá tu certificado con horas acumuladas.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      itemCount: list.length,
+      itemBuilder: (ctx, index) {
+        final cert = list[index];
+        final isAprobado = cert.estaAprobado;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : Colors.white,
+            borderRadius: AppStyles.cardRadius,
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
+            boxShadow: AppStyles.softShadow,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isAprobado
+                            ? AppColors.secondary.withValues(alpha: 0.15)
+                            : AppColors.accent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        isAprobado ? 'Certificado Aprobado' : 'En proceso',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                          color: isAprobado ? AppColors.primary : AppColors.accentDark,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      cert.codigoVerificacion,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                Text(
+                  cert.titulo,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  cert.actividadTitulo,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.secondaryLight : AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    Icon(
+                      isDonacion ? Icons.attach_money_rounded : Icons.timer_outlined,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isDonacion
+                          ? 'Aporte: ${AppFormatters.formatCurrency(cert.monto ?? 0)}'
+                          : '${cert.horas ?? 4} horas de voluntariado certificadas',
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Emitido: ${AppFormatters.formatDateShort(cert.fechaEmision)}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // Botón Ver PDF
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CertificatePdfViewerScreen(certificate: cert),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                  label: const Text('Descargar / Ver Certificado PDF'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(42),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

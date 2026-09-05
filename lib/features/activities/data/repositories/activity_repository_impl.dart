@@ -74,12 +74,14 @@ class ActivityRepositoryImpl implements ActivityRepository {
     required int pasosSesion,
     required double distanciaKm,
     required int calorias,
+    String? fotoEvidenciaUrl,
   }) async {
     return await remoteDataSource.checkOutAsistencia({
       'asistencia_id': asistenciaId,
       'pasos_sesion': pasosSesion,
       'distancia_km': distanciaKm,
       'calorias': calorias,
+      'foto_evidencia_url': fotoEvidenciaUrl,
     });
   }
 }

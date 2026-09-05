@@ -1,6 +1,5 @@
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/network/mock_data.dart';
 import '../models/certificate_model.dart';
 
 abstract class CertificateRemoteDataSource {
@@ -10,43 +9,53 @@ abstract class CertificateRemoteDataSource {
 
 class CertificateRemoteDataSourceImpl implements CertificateRemoteDataSource {
   final ApiClient apiClient;
-  static final List<CertificateModel> localDynamicCertificates = [];
+  static final Map<String, List<CertificateModel>> _userDynamicCertificates = {};
 
   CertificateRemoteDataSourceImpl({required this.apiClient});
 
-  static void addDynamicCertificate(CertificateModel cert) {
-    // Evitar duplicados por id
-    localDynamicCertificates.removeWhere((c) => c.id == cert.id);
-    localDynamicCertificates.insert(0, cert);
+  static void addDynamicCertificate(CertificateModel cert, {String? userId}) {
+    final uid = userId ?? cert.destinatario;
+    final list = _userDynamicCertificates.putIfAbsent(uid, () => []);
+    list.removeWhere((c) => c.id == cert.id);
+    list.insert(0, cert);
+  }
+
+  static List<CertificateModel> getDynamicCertificatesForUser(String userId) {
+    return _userDynamicCertificates[userId] ?? [];
   }
 
   @override
   Future<List<CertificateModel>> getCertificatesByUser(String usuarioId) async {
+    final localList = _userDynamicCertificates[usuarioId] ?? [];
     try {
       final response = await apiClient.dio.get('${ApiConstants.certificados}/usuario/$usuarioId');
       final remote = (response.data as List).map((e) => CertificateModel.fromJson(e)).toList();
-      return [...localDynamicCertificates, ...remote];
+      
+      final Map<String, CertificateModel> map = {};
+      for (final c in remote) {
+        map[c.id] = c;
+      }
+      for (final c in localList) {
+        map[c.id] = c;
+      }
+      return map.values.toList();
     } catch (_) {
-      final mock = MockData.sampleCertificates.map((e) => CertificateModel.fromJson(e)).toList();
-      return [...localDynamicCertificates, ...mock];
+      return localList;
     }
   }
 
   @override
   Future<CertificateModel?> getCertificateById(String id) async {
-    final local = localDynamicCertificates.where((c) => c.id == id).firstOrNull;
-    if (local != null) return local;
+    for (final list in _userDynamicCertificates.values) {
+      final found = list.where((c) => c.id == id).firstOrNull;
+      if (found != null) return found;
+    }
 
     try {
       final response = await apiClient.dio.get('${ApiConstants.certificados}/$id');
       return CertificateModel.fromJson(response.data);
     } catch (_) {
-      try {
-        final item = MockData.sampleCertificates.firstWhere((e) => e['id'] == id);
-        return CertificateModel.fromJson(item);
-      } catch (_) {
-        return null;
-      }
+      return null;
     }
   }
 }

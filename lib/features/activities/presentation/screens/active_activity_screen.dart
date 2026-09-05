@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/services/camera_service.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../certificates/domain/entities/certificate.dart';
@@ -223,33 +224,70 @@ class ActiveActivityScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 36),
 
-                // Botón Finalizar y hacer check-out
-                ElevatedButton(
+                // Botón Finalizar y hacer check-out con Foto de Evidencia
+                ElevatedButton.icon(
                   onPressed: () async {
-                    final confirm = await showDialog<bool>(
+                    // Modal de confirmación y captura de foto de evidencia
+                    final cameraService = CameraService();
+                    String? evidencePhotoPath;
+
+                    final proceedWithPhoto = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
                         shape: RoundedRectangleBorder(borderRadius: AppStyles.cardRadius),
-                        title: const Text('¿Finalizar jornada?'),
-                        content: Text(
-                          'Se completará tu registro de ${AppFormatters.formatNumber(sessionState.steps)} pasos (${sessionState.distanceKm.toStringAsFixed(1)} km) y se generará tu Certificado Oficial de Voluntariado.',
+                        title: Row(
+                          children: const [
+                            Icon(Icons.camera_alt_rounded, color: AppColors.secondary, size: 24),
+                            SizedBox(width: 8),
+                            Text('Evidencia de Asistencia'),
+                          ],
+                        ),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Se registrarán ${AppFormatters.formatNumber(sessionState.steps)} pasos (${sessionState.distanceKm.toStringAsFixed(1)} km).',
+                              style: const TextStyle(fontSize: 13.5),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.secondaryUltraLight.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Text(
+                                '📸 Como requisito institucional, debes tomar una fotografía de evidencia para emitir tu Certificado Oficial.',
+                                style: TextStyle(fontSize: 12.5, color: AppColors.primaryDark, height: 1.35),
+                              ),
+                            ),
+                          ],
                         ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Continuar actividad'),
+                            child: const Text('Continuar jornada'),
                           ),
-                          ElevatedButton(
+                          ElevatedButton.icon(
                             onPressed: () => Navigator.pop(ctx, true),
+                            icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                            label: const Text('Tomar Foto y Finalizar'),
                             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                            child: const Text('Finalizar y Generar Certificado'),
                           ),
                         ],
                       ),
                     );
 
-                    if (confirm == true && context.mounted) {
-                      await sessionNotifier.finishSessionAndCheckOut();
+                    if (proceedWithPhoto == true && context.mounted) {
+                      // Tomar fotografía con la cámara
+                      evidencePhotoPath = await cameraService.takePhoto(userId: user?.id);
+                      evidencePhotoPath ??= 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600';
+
+                      await sessionNotifier.finishSessionAndCheckOut(
+                        fotoEvidenciaUrl: evidencePhotoPath,
+                      );
+
                       if (context.mounted) {
                         final horasAct = activity.duracionHoras > 0 ? activity.duracionHoras : 4;
                         final certCode = 'FB-VOL-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
@@ -275,7 +313,7 @@ class ActiveActivityScreen extends ConsumerWidget {
                             shape: RoundedRectangleBorder(borderRadius: AppStyles.cardRadius),
                             title: Row(
                               children: const [
-                                Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 28),
+                                Icon(Icons.check_circle_rounded, color: AppColors.secondary, size: 28),
                                 SizedBox(width: 10),
                                 Text('¡Jornada Exitosa!'),
                               ],
@@ -290,7 +328,7 @@ class ActiveActivityScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 10),
                                 const Text(
-                                  'Tu certificado de participación ha sido generado y ya está disponible en la pestaña Certificados.',
+                                  'Tu certificado de participación ha sido generado con éxito y guardado en la sección Certificados.',
                                   style: TextStyle(fontSize: 12.5, color: AppColors.textSecondaryLight),
                                 ),
                               ],
@@ -326,12 +364,13 @@ class ActiveActivityScreen extends ConsumerWidget {
                       }
                     }
                   },
+                  icon: const Icon(Icons.camera_alt_outlined, size: 20),
+                  label: const Text('Finalizar y hacer check-out con foto'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
-                  child: const Text('Finalizar y hacer check-out'),
                 ),
                 const SizedBox(height: 16),
               ],
