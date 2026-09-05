@@ -7,6 +7,8 @@ import '../../../../core/utils/formatters.dart';
 import '../../../activities/presentation/providers/activity_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
+import '../../../../core/services/admin_asistencias_store.dart';
+
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -16,6 +18,7 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  List<Map<String, dynamic>> _adminAsistencias = [];
 
   // Lista local de postulaciones para gestionar en admin
   final List<Map<String, dynamic>> _adminPostulaciones = [
@@ -45,34 +48,20 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
     },
   ];
 
-  // Lista de auditoría de asistencias
-  final List<Map<String, dynamic>> _adminAsistencias = [
-    {
-      'id': 'asist-01',
-      'voluntario': 'Luis Fernando Pérez',
-      'actividad': 'Reforestación Río Bosque',
-      'fecha': '2026-08-31',
-      'pasos': 6482,
-      'distancia_km': 4.6,
-      'gps_precision': 'Alta (38m)',
-      'foto_evidencia': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600',
-    },
-    {
-      'id': 'asist-02',
-      'voluntario': 'Camila Torres',
-      'actividad': 'Recuperación de Humedales',
-      'fecha': '2026-08-28',
-      'pasos': 8210,
-      'distancia_km': 5.8,
-      'gps_precision': 'Alta (12m)',
-      'foto_evidencia': 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=600',
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _loadAsistencias();
+  }
+
+  Future<void> _loadAsistencias() async {
+    final list = await AdminAsistenciasStore.getAsistencias();
+    if (mounted) {
+      setState(() {
+        _adminAsistencias = list;
+      });
+    }
   }
 
   @override
@@ -554,10 +543,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
   }
 
   Widget _buildAsistenciasTab(bool isDark) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      itemCount: _adminAsistencias.length,
-      itemBuilder: (ctx, index) {
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: _loadAsistencias,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        itemCount: _adminAsistencias.length,
+        itemBuilder: (ctx, index) {
         final asist = _adminAsistencias[index];
         final photoSrc = asist['foto_evidencia'] as String?;
 
@@ -700,6 +692,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
 }

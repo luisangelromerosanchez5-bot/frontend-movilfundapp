@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/theme/theme_provider.dart';
+import '../../../../core/widgets/botanical_decorations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/badges_modal.dart';
 import '../widgets/profile_avatar.dart';
@@ -33,40 +34,60 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Avatar con cámara integrada individual por usuario
-              ProfileAvatar(
-                userId: user?.id ?? user?.correo,
-                initialPhotoPath: user?.fotoUrl,
-                initials: userInitials,
-                onPhotoChanged: (path) {
-                  if (user != null) {
-                    ref.read(authProvider.notifier).updateProfile(user.copyWith(fotoUrl: path));
-                  }
-                },
-              ),
-              const SizedBox(height: 14),
+              // Tarjeta Botánica con Avatar y Badges de Naturaleza
+              BotanicalCard(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+                showLeaves: true,
+                child: Column(
+                  children: [
+                    ProfileAvatar(
+                      userId: user?.id ?? user?.correo,
+                      initialPhotoPath: user?.fotoUrl,
+                      initials: userInitials,
+                      onPhotoChanged: (path) {
+                        if (user != null) {
+                          ref.read(authProvider.notifier).updateProfile(user.copyWith(fotoUrl: path));
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 14),
 
-              // Nombre de usuario
-              Text(
-                user?.nombreCompleto ?? 'Luis Fernando Pérez',
-                textAlign: TextAlign.center,
-                style: AppStyles.titleMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                    // Nombre de usuario
+                    Text(
+                      user?.nombreCompleto ?? 'Luis Fernando Pérez',
+                      textAlign: TextAlign.center,
+                      style: AppStyles.titleMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+
+                    // Correo electrónico
+                    Text(
+                      user?.correo ?? 'luis@correo.com',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Badges botánicos de impacto ecológico
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      alignment: WrapAlignment.center,
+                      children: const [
+                        LeafTag(text: 'Voluntario Activo', icon: Icons.eco_rounded),
+                        LeafTag(text: 'Protector de Bosques', icon: Icons.park_rounded, color: AppColors.primary),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 2),
-
-              // Correo electrónico
-              Text(
-                user?.correo ?? 'luis@correo.com',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                ),
-              ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
               // Opciones del perfil
               _buildOptionCard(
