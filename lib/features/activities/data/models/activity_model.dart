@@ -1,3 +1,4 @@
+import '../../../../core/utils/activity_image_helper.dart';
 import '../../domain/entities/activity.dart';
 
 class ActivityModel extends Activity {
@@ -22,9 +23,13 @@ class ActivityModel extends Activity {
   });
 
   factory ActivityModel.fromJson(Map<String, dynamic> json) {
+    final title = json['titulo'] ?? '';
+    final rawImg = json['imagen_url'] as String?;
+    final resolvedImg = ActivityImageHelper.resolveImage(title, rawImg);
+
     return ActivityModel(
       id: json['id'] ?? '',
-      titulo: json['titulo'] ?? '',
+      titulo: title,
       descripcion: json['descripcion'] ?? '',
       categoria: json['categoria'] ?? 'General',
       fecha: json['fecha'] ?? '',
@@ -39,7 +44,7 @@ class ActivityModel extends Activity {
       radioPermitidoMetros: (json['radio_permitido_metros'] as num?)?.toInt() ?? 100,
       puntosImpacto: (json['puntos_impacto'] as num?)?.toInt() ?? 100,
       tags: json['tags'] != null ? List<String>.from(json['tags']) : const [],
-      imagenUrl: json['imagen_url'],
+      imagenUrl: resolvedImg,
     );
   }
 

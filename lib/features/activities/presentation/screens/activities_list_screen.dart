@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/utils/activity_image_helper.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../domain/entities/activity.dart';
 import '../providers/activity_provider.dart';
@@ -181,9 +182,9 @@ class _ActivityCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Fotografía única de la actividad con IA
+                // Ficha ilustrada oficial en alta resolución
                 AppImage(
-                  imagePathOrUrl: activity.imagenUrl,
+                  imagePathOrUrl: ActivityImageHelper.resolveImage(activity.titulo, activity.imagenUrl),
                   width: 84,
                   height: 84,
                   borderRadius: BorderRadius.circular(12),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/utils/activity_image_helper.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/activity.dart';
@@ -92,12 +93,12 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Banner / Imagen de la actividad con IA
+              // Ficha ilustrada oficial de la actividad
               AppImage(
-                imagePathOrUrl: widget.activity.imagenUrl,
+                imagePathOrUrl: ActivityImageHelper.resolveImage(widget.activity.titulo, widget.activity.imagenUrl),
                 width: double.infinity,
-                height: 220,
-                fit: BoxFit.cover,
+                height: 240,
+                fit: BoxFit.contain,
               ),
 
               Padding(

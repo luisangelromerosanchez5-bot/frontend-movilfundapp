@@ -6,8 +6,9 @@ import '../../../../core/constants/app_styles.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../activities/presentation/providers/activity_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-
 import '../../../../core/services/admin_asistencias_store.dart';
+import '../../../../core/utils/activity_image_helper.dart';
+import '../../../../core/widgets/app_image.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -406,15 +407,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
             color: isDark ? AppColors.cardDark : Colors.white,
             child: ListTile(
               contentPadding: const EdgeInsets.all(12),
-              leading: ClipRRect(
+              leading: AppImage(
+                imagePathOrUrl: ActivityImageHelper.resolveImage(act.titulo, act.imagenUrl),
+                width: 50,
+                height: 50,
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  act.imagenUrl ?? 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=200',
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.forest),
-                ),
+                fit: BoxFit.cover,
               ),
               title: Text(act.titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               subtitle: Text('${act.fecha} · ${act.cuposOcupados}/${act.cuposTotales} cupos', style: const TextStyle(fontSize: 12)),
