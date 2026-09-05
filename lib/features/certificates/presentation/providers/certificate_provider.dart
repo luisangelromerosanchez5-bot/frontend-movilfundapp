@@ -16,5 +16,6 @@ final certificateRepositoryProvider = Provider<CertificateRepository>((ref) {
 final userCertificatesProvider = FutureProvider<List<Certificate>>((ref) async {
   final repo = ref.watch(certificateRepositoryProvider);
   final user = ref.watch(authProvider).user;
-  return await repo.getCertificatesByUser(user?.id ?? 'u101');
+  final uid = user?.id ?? user?.correo ?? 'u101';
+  return await repo.getCertificatesByUser(uid);
 });

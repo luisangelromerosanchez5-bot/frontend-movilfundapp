@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/botanical_decorations.dart';
 import '../../domain/entities/certificate.dart';
 import '../providers/certificate_provider.dart';
 import 'certificate_pdf_viewer_screen.dart';
@@ -158,115 +159,118 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> with Si
         final cert = list[index];
         final isAprobado = cert.estaAprobado;
 
-        return Container(
+        return BotanicalCard(
           margin: const EdgeInsets.only(bottom: 14),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.cardDark : Colors.white,
-            borderRadius: AppStyles.cardRadius,
-            border: Border.all(
-              color: isDark ? AppColors.borderDark : AppColors.borderLight,
-            ),
-            boxShadow: AppStyles.softShadow,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isAprobado
-                            ? AppColors.secondary.withValues(alpha: 0.15)
-                            : AppColors.accent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        isAprobado ? 'Certificado Aprobado' : 'En proceso',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: isAprobado ? AppColors.primary : AppColors.accentDark,
+          showLeaves: true,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isAprobado
+                          ? AppColors.secondary.withValues(alpha: 0.15)
+                          : AppColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isAprobado ? Icons.eco_rounded : Icons.hourglass_top_rounded,
+                          size: 13,
+                          color: isAprobado ? AppColors.secondary : AppColors.accentDark,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isAprobado ? 'Certificado Aprobado' : 'En proceso',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: isAprobado ? AppColors.primary : AppColors.accentDark,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      cert.codigoVerificacion,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondaryLight,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                Text(
-                  cert.titulo,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  cert.actividadTitulo,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? AppColors.secondaryLight : AppColors.primary,
+                  Text(
+                    cert.codigoVerificacion,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondaryLight,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
+                ],
+              ),
+              const SizedBox(height: 12),
 
-                Row(
-                  children: [
-                    Icon(
-                      isDonacion ? Icons.attach_money_rounded : Icons.timer_outlined,
-                      size: 16,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      isDonacion
-                          ? 'Aporte: ${AppFormatters.formatCurrency(cert.monto ?? 0)}'
-                          : '${cert.horas ?? 4} horas de voluntariado certificadas',
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
-                    ),
-                    const Spacer(),
-                    Text(
-                      'Emitido: ${AppFormatters.formatDateShort(cert.fechaEmision)}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
-                    ),
-                  ],
+              Text(
+                cert.titulo,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                 ),
-                const SizedBox(height: 14),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                cert.actividadTitulo,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.secondaryLight : AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
 
-                // Botón Ver PDF
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CertificatePdfViewerScreen(certificate: cert),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                  label: const Text('Descargar / Ver Certificado PDF'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(42),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              Row(
+                children: [
+                  Icon(
+                    isDonacion ? Icons.volunteer_activism_rounded : Icons.eco_rounded,
+                    size: 16,
+                    color: AppColors.primary,
                   ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isDonacion
+                        ? 'Aporte: ${AppFormatters.formatCurrency(cert.monto ?? 0)}'
+                        : '${cert.horas ?? 4} horas de voluntariado certificadas',
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'Emitido: ${AppFormatters.formatDateShort(cert.fechaEmision)}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Botón Ver PDF
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CertificatePdfViewerScreen(certificate: cert),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                label: const Text('Descargar / Ver Certificado PDF'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(42),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

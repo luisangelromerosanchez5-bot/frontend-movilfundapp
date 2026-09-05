@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/widgets/botanical_decorations.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
@@ -41,6 +42,16 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ),
 
+          // Patrón de hojas botánicas en las esquinas
+          Positioned.fill(
+            child: CustomPaint(
+              painter: BotanicalLeavesPainter(
+                leafColor: AppColors.secondaryLight,
+                opacity: 0.15,
+              ),
+            ),
+          ),
+
           // Contenido principal
           SafeArea(
             child: Padding(
@@ -50,21 +61,21 @@ class WelcomeScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 20),
 
-                  // Badge Superior Ecosocial
+                  // Badge Superior Ecosocial con Hojas
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.secondary.withValues(alpha: 0.15),
+                      color: AppColors.secondary.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(
-                        color: AppColors.secondary.withValues(alpha: 0.35),
+                        color: AppColors.secondary.withValues(alpha: 0.45),
                         width: 1,
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.auto_awesome, color: AppColors.secondaryLight, size: 15),
+                        Icon(Icons.eco_rounded, color: AppColors.secondaryLight, size: 16),
                         SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -72,7 +83,7 @@ class WelcomeScreen extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.secondaryLight,
                               letterSpacing: 0.3,
                             ),
@@ -97,7 +108,7 @@ class WelcomeScreen extends StatelessWidget {
                       children: const [
                         TextSpan(text: 'Transformando vidas para\n'),
                         TextSpan(
-                          text: 'limpiar ecosistemas',
+                          text: 'limpiar ecosistemas 🌿',
                           style: TextStyle(
                             color: AppColors.secondaryLight,
                             decoration: TextDecoration.underline,
@@ -112,7 +123,7 @@ class WelcomeScreen extends StatelessWidget {
 
                   // Subtítulo descriptivo de la misión
                   const Text(
-                    'Únete a nuestra misión. Cada acción cuenta en la construcción de un mundo sostenible, resiliente y consciente.',
+                    'Únete a nuestra misión ecológica. Cada acción cuenta en la conservación ambiental, el cuidado de la biodiversidad y la regeneración del planeta.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -143,6 +154,8 @@ class WelcomeScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
+                        Icon(Icons.spa_rounded, size: 20),
+                        SizedBox(width: 8),
                         Text(
                           'Únete como voluntario',
                           style: TextStyle(
@@ -175,13 +188,20 @@ class WelcomeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Crear una nueva cuenta',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.person_add_alt_1_rounded, size: 18, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          'Crear una nueva cuenta',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),

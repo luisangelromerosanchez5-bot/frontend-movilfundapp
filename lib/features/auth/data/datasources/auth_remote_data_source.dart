@@ -19,65 +19,109 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   AuthRemoteDataSourceImpl({required this.apiClient});
 
+  String _getUserKey(String email) => 'fundapp_user_record_${email.trim().toLowerCase()}';
+
   @override
   Future<UserModel> login(String email, String password) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    final prefs = await SharedPreferences.getInstance();
+
+    UserModel? localStoredUser;
+    final storedJson = prefs.getString(_getUserKey(normalizedEmail));
+    if (storedJson != null) {
+      try {
+        localStoredUser = UserModel.fromJson(jsonDecode(storedJson) as Map<String, dynamic>);
+      } catch (_) {}
+    }
+
     try {
       final response = await apiClient.dio.post(
         ApiConstants.login,
-        data: {'email': email, 'password': password},
+        data: {'email': normalizedEmail, 'password': password},
       );
 
       final token = response.data['access_token'] ?? 'mock-jwt-token-biosferas';
-      final userData = response.data['user'] ?? MockData.sampleUser;
+      final rawUserData = response.data['user'] as Map<String, dynamic>? ?? MockData.sampleUser;
+      
+      final merged = Map<String, dynamic>.from(rawUserData);
+      if (localStoredUser != null) {
+        if (localStoredUser.horasAcumuladas > (merged['horas_acumuladas'] ?? 0)) {
+          merged['horas_acumuladas'] = localStoredUser.horasAcumuladas;
+        }
+        if (localStoredUser.totalCertificados > (merged['total_certificados'] ?? 0)) {
+          merged['total_certificados'] = localStoredUser.totalCertificados;
+        }
+        if (localStoredUser.totalDonaciones > (merged['total_donaciones'] ?? 0)) {
+          merged['total_donaciones'] = localStoredUser.totalDonaciones;
+        }
+      }
 
-      final prefs = await SharedPreferences.getInstance();
+      final user = UserModel.fromJson(merged);
+      final userJson = jsonEncode(user.toJson());
       await prefs.setString(ApiConstants.tokenKey, token);
-      await prefs.setString(ApiConstants.userKey, jsonEncode(userData));
+      await prefs.setString(ApiConstants.userKey, userJson);
+      await prefs.setString(_getUserKey(normalizedEmail), userJson);
+      await prefs.setString('fundapp_user_record_${user.id}', userJson);
 
-      return UserModel.fromJson(userData);
+      return user;
     } catch (_) {
-      // Fallback a autenticación simulada si no hay backend activo
-      final prefs = await SharedPreferences.getInstance();
-      final user = UserModel.fromJson({
+      final user = localStoredUser ?? UserModel.fromJson({
         ...MockData.sampleUser,
-        'correo': email,
+        'id': 'user_${normalizedEmail.hashCode.abs()}',
+        'correo': normalizedEmail,
       });
+
+      final userJson = jsonEncode(user.toJson());
       await prefs.setString(ApiConstants.tokenKey, 'mock-jwt-token-biosferas-2026');
-      await prefs.setString(ApiConstants.userKey, jsonEncode(user.toJson()));
+      await prefs.setString(ApiConstants.userKey, userJson);
+      await prefs.setString(_getUserKey(normalizedEmail), userJson);
+      await prefs.setString('fundapp_user_record_${user.id}', userJson);
+
       return user;
     }
   }
 
   @override
   Future<UserModel> register(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = (data['correo'] as String? ?? data['email'] as String? ?? 'voluntario@correo.com').trim().toLowerCase();
+
     try {
       final response = await apiClient.dio.post(
         ApiConstants.register,
         data: data,
       );
       final token = response.data['access_token'] ?? 'mock-jwt-token-biosferas';
-      final userData = response.data['user'] ?? {
+      final userData = response.data['user'] as Map<String, dynamic>? ?? {
         ...MockData.sampleUser,
         ...data,
       };
 
-      final prefs = await SharedPreferences.getInstance();
+      final user = UserModel.fromJson(userData);
+      final userJson = jsonEncode(user.toJson());
       await prefs.setString(ApiConstants.tokenKey, token);
-      await prefs.setString(ApiConstants.userKey, jsonEncode(userData));
+      await prefs.setString(ApiConstants.userKey, userJson);
+      await prefs.setString(_getUserKey(email), userJson);
+      await prefs.setString('fundapp_user_record_${user.id}', userJson);
 
-      return UserModel.fromJson(userData);
+      return user;
     } catch (_) {
-      final prefs = await SharedPreferences.getInstance();
       final user = UserModel.fromJson({
         ...MockData.sampleUser,
+        'id': 'user_${email.hashCode.abs()}',
         'nombres': data['nombres'] ?? 'Voluntario',
         'apellidos': data['apellidos'] ?? 'Biosferas',
-        'correo': data['correo'] ?? 'voluntario@correo.com',
+        'correo': email,
         'fecha_nacimiento': data['fecha_nacimiento'],
         'telefono': data['telefono'],
       });
+
+      final userJson = jsonEncode(user.toJson());
       await prefs.setString(ApiConstants.tokenKey, 'mock-jwt-token-biosferas-2026');
-      await prefs.setString(ApiConstants.userKey, jsonEncode(user.toJson()));
+      await prefs.setString(ApiConstants.userKey, userJson);
+      await prefs.setString(_getUserKey(email), userJson);
+      await prefs.setString('fundapp_user_record_${user.id}', userJson);
+
       return user;
     }
   }
@@ -100,20 +144,40 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> updateProfile(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(ApiConstants.userKey, jsonEncode(user.toJson()));
+    final userJson = jsonEncode(user.toJson());
+    await prefs.setString(ApiConstants.userKey, userJson);
+    if (user.correo.isNotEmpty) {
+      await prefs.setString(_getUserKey(user.correo), userJson);
+    }
+    await prefs.setString('fundapp_user_record_${user.id}', userJson);
     return user;
   }
 
   @override
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
+    // Guardar el estado actual en el registro del usuario antes de cerrar sesión
+    final currentUserJson = prefs.getString(ApiConstants.userKey);
+    if (currentUserJson != null) {
+      try {
+        final data = jsonDecode(currentUserJson) as Map<String, dynamic>;
+        final email = (data['correo'] as String? ?? '').toLowerCase();
+        if (email.isNotEmpty) {
+          await prefs.setString(_getUserKey(email), currentUserJson);
+        }
+        final id = data['id'] as String? ?? '';
+        if (id.isNotEmpty) {
+          await prefs.setString('fundapp_user_record_$id', currentUserJson);
+        }
+      } catch (_) {}
+    }
+    // Remover sesión activa pero preservando los datos por usuario
     await prefs.remove(ApiConstants.tokenKey);
     await prefs.remove(ApiConstants.userKey);
   }
 
   @override
   Future<void> requestPasswordReset(String email) async {
-    // Simula envío de enlace de recuperación al correo
     await Future.delayed(const Duration(milliseconds: 600));
   }
 }

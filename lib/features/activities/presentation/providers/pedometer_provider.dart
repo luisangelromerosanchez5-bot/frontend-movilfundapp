@@ -158,7 +158,10 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
         documentoIdentidad: '1.098.765.432',
       );
 
-      CertificateRemoteDataSourceImpl.addDynamicCertificate(newCert, userId: user?.id);
+      await CertificateRemoteDataSourceImpl.addDynamicCertificate(
+        newCert,
+        userId: user?.id ?? user?.correo,
+      );
 
       // Actualizar horas acumuladas y certificados del usuario
       if (user != null) {
