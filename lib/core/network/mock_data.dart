@@ -35,7 +35,7 @@ class MockData {
       'radio_permitido_metros': 120,
       'puntos_impacto': 150,
       'tags': ['Siembra', 'Bosque', 'Comunidad'],
-      'imagen_url': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800',
+      'imagen_url': 'assets/images/act_reforestacion_rio.jpg',
     },
     {
       'id': 'act-002',
@@ -54,7 +54,7 @@ class MockData {
       'radio_permitido_metros': 100,
       'puntos_impacto': 100,
       'tags': ['Reciclaje', 'Ciudad', 'CeroBasura'],
-      'imagen_url': 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800',
+      'imagen_url': 'assets/images/act_reciclaje_urbano.jpg',
     },
     {
       'id': 'act-003',
@@ -73,7 +73,7 @@ class MockData {
       'radio_permitido_metros': 150,
       'puntos_impacto': 200,
       'tags': ['Humedal', 'Aves', 'Conservación'],
-      'imagen_url': 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=800',
+      'imagen_url': 'assets/images/act_humedal_cordoba.jpg',
     },
     {
       'id': 'act-004',
@@ -92,7 +92,7 @@ class MockData {
       'radio_permitido_metros': 80,
       'puntos_impacto': 80,
       'tags': ['Talleres', 'Niños', 'Huertas'],
-      'imagen_url': 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800',
+      'imagen_url': 'assets/images/act_educacion_ambiental.jpg',
     },
     {
       'id': 'act-005',
@@ -111,7 +111,7 @@ class MockData {
       'radio_permitido_metros': 200,
       'puntos_impacto': 250,
       'tags': ['Páramo', 'Agua', 'Frailejones'],
-      'imagen_url': 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800',
+      'imagen_url': 'assets/images/act_paramo_frailejones.jpg',
     },
     {
       'id': 'act-006',
@@ -130,7 +130,7 @@ class MockData {
       'radio_permitido_metros': 100,
       'puntos_impacto': 120,
       'tags': ['Aves', 'BioCenso', 'Fauna'],
-      'imagen_url': 'https://images.unsplash.com/photo-1444464666168-49d633b86797?w=800',
+      'imagen_url': 'assets/images/act_aves_silvestres.jpg',
     },
   ];
 

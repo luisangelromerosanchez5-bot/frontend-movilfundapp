@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -524,79 +525,175 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
     );
   }
 
+  Widget _buildEvidenceImage(String? src, {double? width, double? height, BoxFit fit = BoxFit.cover, BorderRadius? borderRadius}) {
+    if (src == null || src.isEmpty) {
+      return Container(
+        width: width ?? 72,
+        height: height ?? 72,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.1),
+          borderRadius: borderRadius ?? BorderRadius.circular(10),
+        ),
+        child: const Icon(Icons.no_photography_outlined, color: AppColors.textSecondaryLight),
+      );
+    }
+
+    Widget img;
+    if (src.startsWith('assets/')) {
+      img = Image.asset(src, width: width, height: height, fit: fit);
+    } else if (src.startsWith('http://') || src.startsWith('https://')) {
+      img = Image.network(src, width: width, height: height, fit: fit, errorBuilder: (_, _, _) => const Icon(Icons.broken_image));
+    } else {
+      img = Image.file(File(src), width: width, height: height, fit: fit, errorBuilder: (_, _, _) => const Icon(Icons.broken_image));
+    }
+
+    if (borderRadius != null) {
+      return ClipRRect(borderRadius: borderRadius, child: img);
+    }
+    return img;
+  }
+
   Widget _buildAsistenciasTab(bool isDark) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       itemCount: _adminAsistencias.length,
       itemBuilder: (ctx, index) {
         final asist = _adminAsistencias[index];
+        final photoSrc = asist['foto_evidencia'] as String?;
+
         return Card(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: 14),
           shape: RoundedRectangleBorder(borderRadius: AppStyles.cardRadius),
           color: isDark ? AppColors.cardDark : Colors.white,
+          elevation: 2,
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(asist['voluntario'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    Row(
-                      children: const [
-                        Icon(Icons.check_circle_rounded, color: AppColors.secondary, size: 16),
-                        SizedBox(width: 4),
-                        Text('Check-out OK', style: TextStyle(color: AppColors.secondary, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(asist['actividad'], style: TextStyle(fontSize: 13, color: isDark ? AppColors.secondaryLight : AppColors.primary)),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Text('👣 ${AppFormatters.formatNumber(asist['pasos'])} pasos', style: const TextStyle(fontSize: 12)),
-                    const SizedBox(width: 12),
-                    Text('📏 ${asist['distancia_km']} km', style: const TextStyle(fontSize: 12)),
-                    const SizedBox(width: 12),
-                    Text('📍 GPS ${asist['gps_precision']}', style: const TextStyle(fontSize: 12)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                InkWell(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (dialogCtx) => Dialog(
-                        shape: RoundedRectangleBorder(borderRadius: AppStyles.cardRadius),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ClipRRect(
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                              child: Image.network(asist['foto_evidencia'], fit: BoxFit.cover),
+                    // Información de la asistencia
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  asist['voluntario'],
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.secondary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Verificado',
+                                  style: TextStyle(color: AppColors.secondary, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            asist['actividad'],
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AppColors.secondaryLight : AppColors.primary,
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                'Evidencia fotográfica: ${asist['voluntario']}',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          Text('📅 Fecha: ${asist['fecha']}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight)),
+                          const SizedBox(height: 4),
+                          Text('👣 Pasos: ${AppFormatters.formatNumber(asist['pasos'])} · ${asist['distancia_km']} km', style: const TextStyle(fontSize: 12)),
+                          const SizedBox(height: 2),
+                          Text('📍 GPS: ${asist['gps_precision']}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight)),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    // Fotografía de evidencia visible directamente en la tarjeta
+                    GestureDetector(
+                      onTap: () {
+                        if (photoSrc != null && photoSrc.isNotEmpty) {
+                          showDialog(
+                            context: context,
+                            builder: (dialogCtx) => Dialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                    child: _buildEvidenceImage(
+                                      photoSrc,
+                                      width: double.infinity,
+                                      height: 280,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Evidencia de Check-out: ${asist['voluntario']}',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text('Actividad: ${asist['actividad']}'),
+                                        Text('Pasos registrados: ${asist['pasos']} (${asist['distancia_km']} km)'),
+                                        Text('Precisión GPS: ${asist['gps_precision']}'),
+                                      ],
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogCtx),
+                                    child: const Text('Cerrar'),
+                                  ),
+                                  const SizedBox(height: 6),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          );
+                        }
+                      },
+                      child: Stack(
+                        children: [
+                          _buildEvidenceImage(
+                            photoSrc,
+                            width: 80,
+                            height: 80,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          Positioned(
+                            bottom: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.zoom_in_rounded, size: 14, color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                  child: Row(
-                    children: const [
-                      Icon(Icons.camera_alt_outlined, color: AppColors.primary, size: 16),
-                      SizedBox(width: 6),
-                      Text('Ver foto de evidencia capturada', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -106,7 +106,10 @@ class DonationNotifier extends StateNotifier<DonationFormState> {
         documentoIdentidad: '1.098.765.432',
       );
 
-      CertificateRemoteDataSourceImpl.addDynamicCertificate(newCert);
+      await CertificateRemoteDataSourceImpl.addDynamicCertificate(
+        newCert,
+        userId: user?.id ?? user?.correo,
+      );
 
       // Actualizar donación acumulada del usuario
       if (user != null) {

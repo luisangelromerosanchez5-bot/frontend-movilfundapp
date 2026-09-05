@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/activity.dart';
 import '../providers/activity_provider.dart';
@@ -91,24 +92,12 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Banner / Imagen de la actividad
-              Container(
-                height: 180,
+              // Banner / Imagen de la actividad con IA
+              AppImage(
+                imagePathOrUrl: widget.activity.imagenUrl,
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  image: widget.activity.imagenUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(widget.activity.imagenUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: widget.activity.imagenUrl == null
-                    ? const Center(
-                        child: Icon(Icons.forest_rounded, size: 64, color: AppColors.primary),
-                      )
-                    : null,
+                height: 220,
+                fit: BoxFit.cover,
               ),
 
               Padding(

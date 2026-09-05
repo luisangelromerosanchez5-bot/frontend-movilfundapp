@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../../domain/entities/activity.dart';
 import '../providers/activity_provider.dart';
 import 'activity_detail_screen.dart';
@@ -180,21 +181,13 @@ class _ActivityCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Fotografía única de la actividad
-                ClipRRect(
+                // Fotografía única de la actividad con IA
+                AppImage(
+                  imagePathOrUrl: activity.imagenUrl,
+                  width: 84,
+                  height: 84,
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    activity.imagenUrl ?? 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400',
-                    width: 82,
-                    height: 82,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 82,
-                      height: 82,
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      child: const Icon(Icons.forest_rounded, color: AppColors.primary, size: 36),
-                    ),
-                  ),
+                  fit: BoxFit.cover,
                 ),
                 const SizedBox(width: 14),
 

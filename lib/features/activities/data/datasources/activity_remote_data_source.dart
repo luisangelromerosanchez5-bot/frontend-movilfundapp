@@ -29,6 +29,7 @@ class ActivityRemoteDataSourceImpl implements ActivityRemoteDataSource {
 
   @override
   Future<List<ActivityModel>> getActivities({String? query, String? categoria}) async {
+    List<ActivityModel> list;
     try {
       final response = await apiClient.dio.get(
         ApiConstants.activities,
@@ -37,24 +38,33 @@ class ActivityRemoteDataSourceImpl implements ActivityRemoteDataSource {
           if (categoria != null && categoria != 'Todos') 'categoria': categoria,
         },
       );
-      final list = (response.data as List).map((e) => ActivityModel.fromJson(e)).toList();
-      return list;
+      list = (response.data as List).map((e) => ActivityModel.fromJson(e)).toList();
+      if (list.isEmpty) {
+        list = List<ActivityModel>.from(_localActivities);
+      }
     } catch (_) {
-      var result = List<ActivityModel>.from(_localActivities);
-      if (query != null && query.isNotEmpty) {
-        final q = query.toLowerCase();
-        result = result
-            .where((a) =>
-                a.titulo.toLowerCase().contains(q) ||
-                a.descripcion.toLowerCase().contains(q) ||
-                a.ubicacionNombre.toLowerCase().contains(q))
-            .toList();
-      }
-      if (categoria != null && categoria.isNotEmpty && categoria != 'Todos') {
-        result = result.where((a) => a.categoria.toLowerCase() == categoria.toLowerCase()).toList();
-      }
-      return result;
+      list = List<ActivityModel>.from(_localActivities);
     }
+
+    var result = list;
+    if (query != null && query.trim().isNotEmpty) {
+      final q = query.trim().toLowerCase();
+      result = result.where((a) {
+        final matchTitle = a.titulo.toLowerCase().contains(q);
+        final matchDesc = a.descripcion.toLowerCase().contains(q);
+        final matchUbi = a.ubicacionNombre.toLowerCase().contains(q);
+        final matchCat = a.categoria.toLowerCase().contains(q);
+        final matchTags = a.tags.any((t) => t.toLowerCase().contains(q));
+        return matchTitle || matchDesc || matchUbi || matchCat || matchTags;
+      }).toList();
+    }
+
+    if (categoria != null && categoria.trim().isNotEmpty && categoria != 'Todos') {
+      final c = categoria.trim().toLowerCase();
+      result = result.where((a) => a.categoria.trim().toLowerCase() == c).toList();
+    }
+
+    return result;
   }
 
   @override
