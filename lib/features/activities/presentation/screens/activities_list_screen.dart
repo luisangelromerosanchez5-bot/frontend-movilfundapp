@@ -16,7 +16,7 @@ class ActivitiesListScreen extends ConsumerWidget {
     final filter = ref.watch(activityFilterProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final categories = ['Todos', 'Reforestación', 'Reciclaje', 'Conservación', 'Educación'];
+    final categories = ['Todos', 'Reforestación', 'Reciclaje', 'Conservación', 'Educación', 'Salud', 'Social'];
 
     return Scaffold(
       appBar: AppBar(
