@@ -15,19 +15,29 @@ class PostulacionModel extends Postulacion {
   });
 
   factory PostulacionModel.fromJson(Map<String, dynamic> json) {
+    DateTime parsedDate;
+    try {
+      final rawDate = json['fecha_postulacion'] ?? json['created_at'] ?? json['fechapostulacion'];
+      if (rawDate != null) {
+        parsedDate = DateTime.parse(rawDate.toString());
+      } else {
+        parsedDate = DateTime.now();
+      }
+    } catch (_) {
+      parsedDate = DateTime.now();
+    }
+
     return PostulacionModel(
       id: json['id']?.toString() ?? json['idpostulaciones']?.toString() ?? '',
       actividadId: json['actividad_id']?.toString() ?? json['actividades_idactividades']?.toString() ?? '',
       usuarioId: json['usuario_id']?.toString() ?? json['usuarios_idusuarios']?.toString() ?? '',
-      actividadTitulo: json['actividad_titulo'] ?? json['comentario'] ?? 'Jornada Ambiental',
+      actividadTitulo: json['actividad_titulo'] ?? json['actividad'] ?? json['comentario'] ?? 'Jornada Ambiental',
       actividadCategoria: json['actividad_categoria'] ?? 'Voluntariado',
-      actividadFecha: json['actividad_fecha'] ?? json['fechapostulacion'] ?? '2026-09-05',
-      actividadHora: json['actividad_hora'] ?? '08:00 AM',
-      actividadUbicacion: json['actividad_ubicacion'] ?? 'Punto de encuentro',
+      actividadFecha: json['actividad_fecha'] ?? json['fecha'] ?? json['fechapostulacion'] ?? '2026-09-05',
+      actividadHora: json['actividad_hora'] ?? json['hora'] ?? '08:00 AM',
+      actividadUbicacion: json['actividad_ubicacion'] ?? json['ubicacion'] ?? 'Punto de encuentro',
       estado: json['estado'] ?? json['estadopostulacion'] ?? 'aprobada',
-      fechaPostulacion: json['fecha_postulacion'] != null
-          ? DateTime.parse(json['fecha_postulacion'])
-          : DateTime.now(),
+      fechaPostulacion: parsedDate,
     );
   }
 

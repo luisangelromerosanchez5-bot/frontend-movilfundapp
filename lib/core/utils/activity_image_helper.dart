@@ -86,24 +86,27 @@ class ActivityImageHelper {
   }
 
   static String resolveImage(String title, [String? currentImageUrl]) {
-    if (currentImageUrl != null &&
-        currentImageUrl.startsWith('assets/images/act_') &&
-        !currentImageUrl.contains('unsplash')) {
-      return currentImageUrl;
+    // 1. Si ya es una ruta de asset válida, retornarla
+    if (currentImageUrl != null && currentImageUrl.trim().startsWith('assets/')) {
+      return currentImageUrl.trim();
     }
 
+    // 2. Coincidencia por palabra clave del título
     final normalizedTitle = _normalize(title);
-
     for (final entry in _keywordToAsset.entries) {
       if (normalizedTitle.contains(entry.key)) {
         return entry.value;
       }
     }
 
-    if (currentImageUrl != null && currentImageUrl.isNotEmpty && !currentImageUrl.contains('unsplash')) {
-      return currentImageUrl;
+    // 3. Si tiene una URL de internet válida (http/https), retornarla
+    if (currentImageUrl != null &&
+        currentImageUrl.trim().isNotEmpty &&
+        (currentImageUrl.startsWith('http://') || currentImageUrl.startsWith('https://'))) {
+      return currentImageUrl.trim();
     }
 
+    // 4. Fallback oficial
     return 'assets/images/act_reforestacion_rio.jpg';
   }
 }

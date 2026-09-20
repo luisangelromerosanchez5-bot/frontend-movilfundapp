@@ -49,7 +49,15 @@ class AppImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (context, error, stackTrace) => placeholder ?? defaultPlaceholder,
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset(
+            'assets/images/act_reforestacion_rio.jpg',
+            width: width,
+            height: height,
+            fit: fit,
+            errorBuilder: (ctx, err, st) => placeholder ?? defaultPlaceholder,
+          );
+        },
       );
     }
 
