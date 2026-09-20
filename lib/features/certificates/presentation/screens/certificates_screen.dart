@@ -229,20 +229,25 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> with Si
               const SizedBox(height: 8),
 
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(
                     isDonacion ? Icons.volunteer_activism_rounded : Icons.eco_rounded,
                     size: 16,
                     color: AppColors.primary,
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    isDonacion
-                        ? 'Aporte: ${AppFormatters.formatCurrency(cert.monto ?? 0)}'
-                        : '${cert.horas ?? 4} horas de voluntariado certificadas',
-                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      isDonacion
+                          ? 'Aporte: ${AppFormatters.formatCurrency(cert.monto ?? 0)}'
+                          : '${cert.horas ?? 4} horas certificadas',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   Text(
                     'Emitido: ${AppFormatters.formatDateShort(cert.fechaEmision)}',
                     style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),

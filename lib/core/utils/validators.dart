@@ -30,6 +30,22 @@ class AppValidators {
     return null;
   }
 
+  static String? validateName(String? value, String fieldName) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName es obligatorio';
+    }
+    final trimmed = value.trim();
+    if (trimmed.length < 2) {
+      return '$fieldName debe tener al menos 2 caracteres';
+    }
+    // Solo letras (incluyendo acentos y ñ), espacios, apóstrofes y guiones
+    final nameRegex = RegExp(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$");
+    if (!nameRegex.hasMatch(trimmed)) {
+      return '$fieldName no debe contener números ni símbolos';
+    }
+    return null;
+  }
+
   static String? validateAmount(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Ingresa un monto';

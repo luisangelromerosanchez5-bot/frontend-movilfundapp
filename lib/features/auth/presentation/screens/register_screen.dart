@@ -162,7 +162,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _nombresController,
-                  validator: (v) => AppValidators.validateRequired(v, 'Nombres'),
+                  textCapitalization: TextCapitalization.words,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r"[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]")),
+                  ],
+                  validator: (v) => AppValidators.validateName(v, 'Nombres'),
                   decoration: const InputDecoration(
                     hintText: 'Luis Fernando',
                     prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
@@ -180,7 +184,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _apellidosController,
-                  validator: (v) => AppValidators.validateRequired(v, 'Apellidos'),
+                  textCapitalization: TextCapitalization.words,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r"[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]")),
+                  ],
+                  validator: (v) => AppValidators.validateName(v, 'Apellidos'),
                   decoration: const InputDecoration(
                     hintText: 'Pérez Gómez',
                     prefixIcon: Icon(Icons.person_outline_rounded, size: 20),

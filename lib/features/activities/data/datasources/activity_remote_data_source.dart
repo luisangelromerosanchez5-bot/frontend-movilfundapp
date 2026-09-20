@@ -2,6 +2,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mock_data.dart';
+import '../../../../core/services/admin_postulaciones_store.dart';
 import '../models/activity_model.dart';
 import '../models/asistencia_model.dart';
 import '../models/postulacion_model.dart';
@@ -11,6 +12,7 @@ abstract class ActivityRemoteDataSource {
   Future<ActivityModel?> getActivityById(String id);
   Future<List<PostulacionModel>> getUserPostulaciones(String usuarioId);
   Future<bool> postularseActividad(Map<String, dynamic> data);
+  Future<bool> createActivity(ActivityModel activity);
   Future<AsistenciaModel> checkInAsistencia(Map<String, dynamic> data);
   Future<AsistenciaModel> checkOutAsistencia(Map<String, dynamic> data);
 }
@@ -121,6 +123,16 @@ class ActivityRemoteDataSourceImpl implements ActivityRemoteDataSource {
     _localPostulaciones.removeWhere((p) => p.actividadId == actId && p.usuarioId == userId);
     _localPostulaciones.insert(0, newPost);
 
+    // Sincronizar inmediatamente con el almacén del panel de administración
+    await AdminPostulacionesStore.savePostulacion({
+      'id': newPost.id,
+      'voluntario': data['nombres'] ?? 'Voluntario Activo',
+      'correo': data['correo'] ?? 'voluntario@correo.com',
+      'actividad': actTitulo,
+      'fecha': actFecha,
+      'estado': 'Aprobada',
+    });
+
     try {
       await apiClient.dio.post(ApiConstants.postulaciones, data: data);
       return true;
@@ -148,6 +160,17 @@ class ActivityRemoteDataSourceImpl implements ActivityRemoteDataSource {
           imagenUrl: act.imagenUrl,
         );
       }
+      return true;
+    }
+  }
+
+  @override
+  Future<bool> createActivity(ActivityModel activity) async {
+    _localActivities.insert(0, activity);
+    try {
+      await apiClient.dio.post(ApiConstants.activities, data: activity.toJson());
+      return true;
+    } catch (_) {
       return true;
     }
   }

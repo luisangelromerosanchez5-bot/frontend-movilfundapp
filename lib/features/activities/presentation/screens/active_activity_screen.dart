@@ -280,8 +280,8 @@ class ActiveActivityScreen extends ConsumerWidget {
                     );
 
                     if (proceedWithPhoto == true && context.mounted) {
-                      // Tomar fotografía con la cámara
-                      evidencePhotoPath = await cameraService.takePhoto(userId: user?.id);
+                      // Tomar fotografía de evidencia con la cámara (no altera la foto de perfil)
+                      evidencePhotoPath = await cameraService.takeEvidencePhoto();
                       evidencePhotoPath ??= 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600';
 
                       await sessionNotifier.finishSessionAndCheckOut(

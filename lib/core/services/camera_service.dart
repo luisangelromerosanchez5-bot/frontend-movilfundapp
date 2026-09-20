@@ -24,8 +24,30 @@ class CameraService {
     }
   }
 
-  /// Toma una foto con la cámara del dispositivo
-  Future<String?> takePhoto({String? userId}) async {
+  /// Toma una foto de evidencia para check-out de actividad (NO altera la foto de perfil)
+  Future<String?> takeEvidencePhoto() async {
+    try {
+      await requestCameraPermission();
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.rear,
+        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (photo != null) {
+        return photo.path;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[CameraService] Error tomando foto de evidencia: $e');
+      return null;
+    }
+  }
+
+  /// Toma una foto con la cámara exclusivamente para el perfil
+  Future<String?> takeProfilePhoto({String? userId}) async {
     try {
       await requestCameraPermission();
       final XFile? photo = await _picker.pickImage(
@@ -42,13 +64,38 @@ class CameraService {
       }
       return null;
     } catch (e) {
+      debugPrint('[CameraService] Error tomando foto de perfil: $e');
+      return null;
+    }
+  }
+
+  /// Toma una foto genérica (compatible hacia atrás)
+  Future<String?> takePhoto({String? userId, bool saveAsProfile = false}) async {
+    try {
+      await requestCameraPermission();
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.front,
+        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (photo != null) {
+        if (saveAsProfile) {
+          await saveProfilePhotoPath(photo.path, userId: userId);
+        }
+        return photo.path;
+      }
+      return null;
+    } catch (e) {
       debugPrint('[CameraService] Error tomando foto con la cámara: $e');
       return null;
     }
   }
 
   /// Selecciona una foto de la galería
-  Future<String?> pickFromGallery({String? userId}) async {
+  Future<String?> pickFromGallery({String? userId, bool isProfile = true}) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -58,7 +105,9 @@ class CameraService {
       );
 
       if (image != null) {
-        await saveProfilePhotoPath(image.path, userId: userId);
+        if (isProfile) {
+          await saveProfilePhotoPath(image.path, userId: userId);
+        }
         return image.path;
       }
       return null;

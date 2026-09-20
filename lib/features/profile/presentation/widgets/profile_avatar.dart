@@ -89,7 +89,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
                 title: const Text('Tomar foto con la cámara'),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final path = await _cameraService.takePhoto(userId: widget.userId);
+                  final path = await _cameraService.takeProfilePhoto(userId: widget.userId);
                   if (path != null && mounted) {
                     setState(() => _currentPhotoPath = path);
                     widget.onPhotoChanged?.call(path);

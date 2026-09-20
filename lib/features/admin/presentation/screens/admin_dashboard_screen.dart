@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/services/admin_asistencias_store.dart';
+import '../../../../core/services/admin_postulaciones_store.dart';
+import '../../../../core/utils/activity_image_helper.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_image.dart';
+import '../../../activities/data/models/activity_model.dart';
 import '../../../activities/presentation/providers/activity_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../../core/services/admin_asistencias_store.dart';
-import '../../../../core/utils/activity_image_helper.dart';
-import '../../../../core/widgets/app_image.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -20,40 +22,14 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Map<String, dynamic>> _adminAsistencias = [];
-
-  // Lista local de postulaciones para gestionar en admin
-  final List<Map<String, dynamic>> _adminPostulaciones = [
-    {
-      'id': 'post-101',
-      'voluntario': 'Carlos Alberto Ruiz',
-      'correo': 'carlos.ruiz@correo.com',
-      'actividad': 'Reforestación Río Bosque',
-      'fecha': '2026-09-05',
-      'estado': 'Pendiente',
-    },
-    {
-      'id': 'post-102',
-      'voluntario': 'María José Gómez',
-      'correo': 'maria.gomez@correo.com',
-      'actividad': 'Limpieza de Humedal Córdoba',
-      'fecha': '2026-09-19',
-      'estado': 'Aprobada',
-    },
-    {
-      'id': 'post-103',
-      'voluntario': 'Andrés Felipe Castro',
-      'correo': 'andres.c@correo.com',
-      'actividad': 'Jornada de Reciclaje Urbano',
-      'fecha': '2026-09-11',
-      'estado': 'Pendiente',
-    },
-  ];
+  List<Map<String, dynamic>> _adminPostulaciones = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _loadAsistencias();
+    _loadPostulaciones();
   }
 
   Future<void> _loadAsistencias() async {
@@ -61,6 +37,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
     if (mounted) {
       setState(() {
         _adminAsistencias = list;
+      });
+    }
+  }
+
+  Future<void> _loadPostulaciones() async {
+    final list = await AdminPostulacionesStore.getPostulaciones();
+    if (mounted) {
+      setState(() {
+        _adminPostulaciones = list;
       });
     }
   }
@@ -190,9 +175,40 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (formKey.currentState?.validate() ?? false) {
-                      Navigator.pop(ctx);
+                      final title = tituloCtrl.text.trim();
+                      final defaultImg = ActivityImageHelper.resolveImage(
+                        title,
+                        'assets/images/act_reforestacion_rio.jpg',
+                      );
+
+                      final newAct = ActivityModel(
+                        id: 'act-${DateTime.now().millisecondsSinceEpoch}',
+                        titulo: title,
+                        descripcion: descCtrl.text.trim(),
+                        categoria: categoriaCtrl.text.trim().isNotEmpty ? categoriaCtrl.text.trim() : 'Reforestación',
+                        fecha: fechaCtrl.text.trim().isNotEmpty ? fechaCtrl.text.trim() : '2026-10-10',
+                        hora: horaCtrl.text.trim().isNotEmpty ? horaCtrl.text.trim() : '08:00 AM',
+                        duracionHoras: 4,
+                        cuposTotales: int.tryParse(cuposCtrl.text.trim()) ?? 30,
+                        cuposOcupados: 0,
+                        estadoCupos: 'disponible',
+                        ubicacionNombre: ubicacionCtrl.text.trim().isNotEmpty ? ubicacionCtrl.text.trim() : 'Parque Ecológico Central',
+                        latitud: double.tryParse(latCtrl.text.trim()) ?? 4.7110,
+                        longitud: double.tryParse(lngCtrl.text.trim()) ?? -74.0721,
+                        radioPermitidoMetros: 100,
+                        puntosImpacto: 150,
+                        tags: [categoriaCtrl.text.trim(), 'Comunidad'],
+                        imagenUrl: defaultImg,
+                      );
+
+                      await ref.read(activityRemoteDataSourceProvider).createActivity(newAct);
+
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                      }
+                      if (!mounted) return;
                       ref.invalidate(activitiesListProvider);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -441,74 +457,103 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
   }
 
   Widget _buildPostulacionesTab(bool isDark) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      itemCount: _adminPostulaciones.length,
-      itemBuilder: (ctx, index) {
-        final post = _adminPostulaciones[index];
-        final isPendiente = post['estado'] == 'Pendiente';
+    if (_adminPostulaciones.isEmpty) {
+      return RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: _loadPostulaciones,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          children: const [
+            Center(
+              child: Text(
+                'No hay postulaciones registradas aún.',
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondaryLight),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: AppStyles.cardRadius),
-          color: isDark ? AppColors.cardDark : Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(post['voluntario'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    Text(
-                      post['estado'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: post['estado'] == 'Aprobada' ? AppColors.secondary : AppColors.accent,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(post['actividad'], style: TextStyle(fontSize: 13, color: isDark ? AppColors.secondaryLight : AppColors.primary)),
-                Text('${post['correo']} · ${post['fecha']}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight)),
-                if (isPendiente) ...[
-                  const SizedBox(height: 12),
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: _loadPostulaciones,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        itemCount: _adminPostulaciones.length,
+        itemBuilder: (ctx, index) {
+          final post = _adminPostulaciones[index];
+          final isPendiente = post['estado'] == 'Pendiente';
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            shape: RoundedRectangleBorder(borderRadius: AppStyles.cardRadius),
+            color: isDark ? AppColors.cardDark : Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      OutlinedButton(
-                        onPressed: () {
-                          setState(() {
-                            post['estado'] = 'Rechazada';
-                          });
-                        },
-                        style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
-                        child: const Text('Rechazar'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            post['estado'] = 'Aprobada';
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Postulación de ${post['voluntario']} aprobada.')),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                        child: const Text('Aprobar'),
+                      Text(post['voluntario'] ?? 'Voluntario', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(
+                        post['estado'] ?? 'Pendiente',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: post['estado'] == 'Aprobada'
+                              ? AppColors.secondary
+                              : post['estado'] == 'Rechazada'
+                                  ? AppColors.error
+                                  : AppColors.accent,
+                        ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  Text(post['actividad'] ?? 'Actividad', style: TextStyle(fontSize: 13, color: isDark ? AppColors.secondaryLight : AppColors.primary)),
+                  Text('${post['correo'] ?? ''} · ${post['fecha'] ?? ''}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight)),
+                  if (isPendiente) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () async {
+                            await AdminPostulacionesStore.updateEstado(post['id'], 'Rechazada');
+                            setState(() {
+                              post['estado'] = 'Rechazada';
+                            });
+                          },
+                          style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
+                          child: const Text('Rechazar'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await AdminPostulacionesStore.updateEstado(post['id'], 'Aprobada');
+                            if (!mounted) return;
+                            setState(() {
+                              post['estado'] = 'Aprobada';
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Postulación de ${post['voluntario']} aprobada.')),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                          child: const Text('Aprobar'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
