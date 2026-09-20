@@ -497,7 +497,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(post['voluntario'] ?? 'Voluntario', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Flexible(
+                        child: Text(
+                          post['voluntario'] ?? 'Voluntario',
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                      ),
                       Text(
                         post['estado'] ?? 'Pendiente',
                         style: TextStyle(

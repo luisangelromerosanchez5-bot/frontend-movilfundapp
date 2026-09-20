@@ -107,8 +107,8 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> with Si
   }) {
     if (list.isEmpty) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -169,34 +169,40 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> with Si
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isAprobado
-                          ? AppColors.secondary.withValues(alpha: 0.15)
-                          : AppColors.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isAprobado ? Icons.eco_rounded : Icons.hourglass_top_rounded,
-                          size: 13,
-                          color: isAprobado ? AppColors.secondary : AppColors.accentDark,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isAprobado ? 'Certificado Aprobado' : 'En proceso',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.bold,
-                            color: isAprobado ? AppColors.primary : AppColors.accentDark,
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isAprobado
+                            ? AppColors.secondary.withValues(alpha: 0.15)
+                            : AppColors.accent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isAprobado ? Icons.eco_rounded : Icons.hourglass_top_rounded,
+                            size: 13,
+                            color: isAprobado ? AppColors.secondary : AppColors.accentDark,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              isAprobado ? 'Certificado Aprobado' : 'En proceso',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: isAprobado ? AppColors.primary : AppColors.accentDark,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
                     cert.codigoVerificacion,
                     style: const TextStyle(
