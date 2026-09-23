@@ -111,13 +111,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // NOMBRE COMPLETO (BLOQUEADO / READ-ONLY)
                 Row(
                   children: [
-                    Text(
-                      'NOMBRE COMPLETO',
-                      style: AppStyles.labelUppercase.copyWith(
-                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    Expanded(
+                      child: Text(
+                        'NOMBRE COMPLETO',
+                        style: AppStyles.labelUppercase.copyWith(
+                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -141,13 +142,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // CÉDULA / IDENTIFICACIÓN (BLOQUEADO / READ-ONLY)
                 Row(
                   children: [
-                    Text(
-                      'NÚMERO DE IDENTIFICACIÓN (CÉDULA)',
-                      style: AppStyles.labelUppercase.copyWith(
-                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    Expanded(
+                      child: Text(
+                        'NÚMERO DE IDENTIFICACIÓN (CÉDULA)',
+                        style: AppStyles.labelUppercase.copyWith(
+                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),

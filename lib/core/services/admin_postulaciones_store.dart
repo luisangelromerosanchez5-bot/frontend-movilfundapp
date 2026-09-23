@@ -42,7 +42,6 @@ class AdminPostulacionesStore {
     },
   ];
 
-  /// Obtiene la lista completa de postulaciones para el administrador
   static Future<List<Map<String, dynamic>>> getPostulaciones() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonStr = prefs.getString(_storageKey);
@@ -53,6 +52,8 @@ class AdminPostulacionesStore {
         if (list.isNotEmpty) return list;
       } catch (_) {}
     }
+    // Si llegamos aquí, la lista está vacía o hubo error, devolvemos los mock y los guardamos
+    await prefs.setString(_storageKey, jsonEncode(_defaultPostulaciones));
     return List<Map<String, dynamic>>.from(_defaultPostulaciones);
   }
 

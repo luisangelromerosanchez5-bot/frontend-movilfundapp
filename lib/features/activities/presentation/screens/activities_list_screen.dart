@@ -239,7 +239,9 @@ class _ActivityCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       // Tag de estado y categoría
-                      Row(
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -258,7 +260,6 @@ class _ActivityCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(

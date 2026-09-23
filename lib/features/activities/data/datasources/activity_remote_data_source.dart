@@ -69,8 +69,12 @@ class ActivityRemoteDataSourceImpl implements ActivityRemoteDataSource {
         },
       );
       list = (response.data as List).map((e) => ActivityModel.fromJson(e)).toList();
-      if (list.isEmpty) {
-        list = List<ActivityModel>.from(_localActivities);
+      
+      // Asegurar que las actividades creadas localmente se muestren inmediatamente
+      for (var localAct in _localActivities) {
+        if (!list.any((remoteAct) => remoteAct.id == localAct.id)) {
+          list.insert(0, localAct);
+        }
       }
     } catch (_) {
       list = List<ActivityModel>.from(_localActivities);

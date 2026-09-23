@@ -4,6 +4,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../activities/presentation/providers/activity_provider.dart';
 import '../../../activities/presentation/screens/check_in_screen.dart';
+import '../../../../core/utils/activity_image_helper.dart';
+import '../../../../core/widgets/app_image.dart';
 
 class MyPostulacionesScreen extends ConsumerWidget {
   const MyPostulacionesScreen({super.key});
@@ -110,7 +112,15 @@ class MyPostulacionesScreen extends ConsumerWidget {
                                 ),
                               ),
                             ),
-                            const Icon(Icons.forest_rounded, color: AppColors.primary, size: 20),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: AppImage(
+                                imagePathOrUrl: ActivityImageHelper.resolveImage(post.actividadTitulo, null),
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),

@@ -8,7 +8,7 @@ import '../../../../core/services/admin_postulaciones_store.dart';
 import '../../../../core/utils/activity_image_helper.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_image.dart';
-import '../../../activities/data/models/activity_model.dart';
+
 import '../../../activities/presentation/providers/activity_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -56,182 +56,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
     super.dispose();
   }
 
-  void _showCreateActivityModal() {
-    final formKey = GlobalKey<FormState>();
-    final tituloCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-    final categoriaCtrl = TextEditingController(text: 'Reforestación');
-    final fechaCtrl = TextEditingController(text: '2026-10-10');
-    final horaCtrl = TextEditingController(text: '08:00 AM');
-    final cuposCtrl = TextEditingController(text: '30');
-    final ubicacionCtrl = TextEditingController(text: 'Parque Ecológico Central');
-    final latCtrl = TextEditingController(text: '4.7110');
-    final lngCtrl = TextEditingController(text: '-74.0721');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          left: 24,
-          right: 24,
-          top: 20,
-        ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Nueva Actividad de Voluntariado', style: AppStyles.titleSmall),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                TextFormField(
-                  controller: tituloCtrl,
-                  decoration: const InputDecoration(labelText: 'Título de la actividad *'),
-                  validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: descCtrl,
-                  maxLines: 2,
-                  decoration: const InputDecoration(labelText: 'Descripción del impacto ambiental *'),
-                  validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: categoriaCtrl,
-                        decoration: const InputDecoration(labelText: 'Categoría'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: cuposCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'Cupos'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: fechaCtrl,
-                        decoration: const InputDecoration(labelText: 'Fecha (AAAA-MM-DD)'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: horaCtrl,
-                        decoration: const InputDecoration(labelText: 'Hora'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: ubicacionCtrl,
-                  decoration: const InputDecoration(labelText: 'Ubicación / Punto de encuentro'),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: latCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Latitud GPS'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: lngCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Longitud GPS'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (formKey.currentState?.validate() ?? false) {
-                      final title = tituloCtrl.text.trim();
-                      final defaultImg = ActivityImageHelper.resolveImage(
-                        title,
-                        'assets/images/act_reforestacion_rio.jpg',
-                      );
-
-                      final newAct = ActivityModel(
-                        id: 'act-${DateTime.now().millisecondsSinceEpoch}',
-                        titulo: title,
-                        descripcion: descCtrl.text.trim(),
-                        categoria: categoriaCtrl.text.trim().isNotEmpty ? categoriaCtrl.text.trim() : 'Reforestación',
-                        fecha: fechaCtrl.text.trim().isNotEmpty ? fechaCtrl.text.trim() : '2026-10-10',
-                        hora: horaCtrl.text.trim().isNotEmpty ? horaCtrl.text.trim() : '08:00 AM',
-                        duracionHoras: 4,
-                        cuposTotales: int.tryParse(cuposCtrl.text.trim()) ?? 30,
-                        cuposOcupados: 0,
-                        estadoCupos: 'disponible',
-                        ubicacionNombre: ubicacionCtrl.text.trim().isNotEmpty ? ubicacionCtrl.text.trim() : 'Parque Ecológico Central',
-                        latitud: double.tryParse(latCtrl.text.trim()) ?? 4.7110,
-                        longitud: double.tryParse(lngCtrl.text.trim()) ?? -74.0721,
-                        radioPermitidoMetros: 100,
-                        puntosImpacto: 150,
-                        tags: [categoriaCtrl.text.trim(), 'Comunidad'],
-                        imagenUrl: defaultImg,
-                      );
-
-                      await ref.read(activityRemoteDataSourceProvider).createActivity(newAct);
-
-                      if (ctx.mounted) {
-                        Navigator.pop(ctx);
-                      }
-                      if (!mounted) return;
-                      ref.invalidate(activitiesListProvider);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('¡Actividad creada y publicada exitosamente!'),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('Publicar Actividad'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -276,12 +100,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
           _buildPostulacionesTab(isDark),
           _buildAsistenciasTab(isDark),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateActivityModal,
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Crear Actividad', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -523,8 +341,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
                   Text('${post['correo'] ?? ''} · ${post['fecha'] ?? ''}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight)),
                   if (isPendiente) ...[
                     const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         OutlinedButton(
                           onPressed: () async {
@@ -536,7 +356,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
                           style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
                           child: const Text('Rechazar'),
                         ),
-                        const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () async {
                             await AdminPostulacionesStore.updateEstado(post['id'], 'Aprobada');

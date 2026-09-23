@@ -86,8 +86,10 @@ class ActivityImageHelper {
   }
 
   static String resolveImage(String title, [String? currentImageUrl]) {
-    // 1. Si ya es una ruta de asset válida, retornarla
-    if (currentImageUrl != null && currentImageUrl.trim().startsWith('assets/')) {
+    // 1. Si tiene una URL de internet válida (http/https), retornarla
+    if (currentImageUrl != null &&
+        currentImageUrl.trim().isNotEmpty &&
+        (currentImageUrl.startsWith('http://') || currentImageUrl.startsWith('https://'))) {
       return currentImageUrl.trim();
     }
 
@@ -99,10 +101,8 @@ class ActivityImageHelper {
       }
     }
 
-    // 3. Si tiene una URL de internet válida (http/https), retornarla
-    if (currentImageUrl != null &&
-        currentImageUrl.trim().isNotEmpty &&
-        (currentImageUrl.startsWith('http://') || currentImageUrl.startsWith('https://'))) {
+    // 3. Si ya es una ruta de asset válida, retornarla
+    if (currentImageUrl != null && currentImageUrl.trim().startsWith('assets/')) {
       return currentImageUrl.trim();
     }
 

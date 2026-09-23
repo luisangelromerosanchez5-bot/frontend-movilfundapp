@@ -5,6 +5,8 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mock_data.dart';
 import '../models/user_model.dart';
 
+import 'package:dio/dio.dart';
+
 abstract class AuthRemoteDataSource {
   Future<UserModel> login(String email, String password);
   Future<UserModel> register(Map<String, dynamic> data);
@@ -64,20 +66,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await prefs.setString('fundapp_user_record_${user.id}', userJson);
 
       return user;
-    } catch (_) {
-      final user = localStoredUser ?? UserModel.fromJson({
-        ...MockData.sampleUser,
-        'id': 'user_${normalizedEmail.hashCode.abs()}',
-        'correo': normalizedEmail,
-      });
-
-      final userJson = jsonEncode(user.toJson());
-      await prefs.setString(ApiConstants.tokenKey, 'mock-jwt-token-biosferas-2026');
-      await prefs.setString(ApiConstants.userKey, userJson);
-      await prefs.setString(_getUserKey(normalizedEmail), userJson);
-      await prefs.setString('fundapp_user_record_${user.id}', userJson);
-
-      return user;
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data is Map) {
+        final detail = e.response?.data['detail'];
+        if (detail != null) throw detail.toString();
+      }
+      throw 'Error de red o servidor al iniciar sesión';
+    } catch (e) {
+      throw 'Ocurrió un error inesperado al iniciar sesión';
     }
   }
 
@@ -105,24 +101,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await prefs.setString('fundapp_user_record_${user.id}', userJson);
 
       return user;
-    } catch (_) {
-      final user = UserModel.fromJson({
-        ...MockData.sampleUser,
-        'id': 'user_${email.hashCode.abs()}',
-        'nombres': data['nombres'] ?? 'Voluntario',
-        'apellidos': data['apellidos'] ?? 'Biosferas',
-        'correo': email,
-        'fecha_nacimiento': data['fecha_nacimiento'],
-        'telefono': data['telefono'],
-      });
-
-      final userJson = jsonEncode(user.toJson());
-      await prefs.setString(ApiConstants.tokenKey, 'mock-jwt-token-biosferas-2026');
-      await prefs.setString(ApiConstants.userKey, userJson);
-      await prefs.setString(_getUserKey(email), userJson);
-      await prefs.setString('fundapp_user_record_${user.id}', userJson);
-
-      return user;
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data is Map) {
+        final detail = e.response?.data['detail'];
+        if (detail != null) throw detail.toString();
+      }
+      throw 'Error de red o servidor al registrarse';
+    } catch (e) {
+      throw 'Ocurrió un error inesperado al registrarse';
     }
   }
 

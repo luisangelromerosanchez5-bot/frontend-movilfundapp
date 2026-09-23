@@ -130,14 +130,17 @@ class CheckInScreen extends ConsumerWidget {
                     size: 18,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    checkInState.isInside
-                        ? 'Estás dentro del punto de encuentro'
-                        : 'Estás fuera del radio permitido',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: checkInState.isInside ? AppColors.primary : AppColors.error,
+                  Flexible(
+                    child: Text(
+                      checkInState.isInside
+                          ? 'Estás dentro del punto de encuentro'
+                          : 'Estás fuera del radio permitido',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: checkInState.isInside ? AppColors.primary : AppColors.error,
+                      ),
                     ),
                   ),
                 ],
